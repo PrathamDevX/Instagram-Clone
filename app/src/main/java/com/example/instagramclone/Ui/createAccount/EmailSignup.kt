@@ -23,7 +23,7 @@ import com.example.instagramclone.components.createAccount.MobCreation.MobField
 import com.example.instagramclone.components.createAccount.NextButton
 
 @Composable
-fun MobSignup(
+fun EmailSignup(
     navController: NavController
 ) {
     Column(

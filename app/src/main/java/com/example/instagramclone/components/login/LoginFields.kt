@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.sp
 fun LoginInputFields() {
 
     var username by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
@@ -56,7 +57,7 @@ fun LoginInputFields() {
 
         OutlinedTextField(
             value = username,
-            onValueChange = { username = it },
+            onValueChange = { password = it },
             label = {
                 Text(
                     "Password",

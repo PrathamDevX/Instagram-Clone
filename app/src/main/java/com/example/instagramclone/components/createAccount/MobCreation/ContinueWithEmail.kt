@@ -1,4 +1,4 @@
-package com.example.instagramclone.components.createAccount
+package com.example.instagramclone.components.createAccount.MobCreation
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -14,7 +14,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.instagramclone.Navigation.Routes
-import java.security.DrbgParameters
 
 @Composable
 fun ContinueWithEmailButton(
