@@ -12,11 +12,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import com.example.instagramclone.Navigation.Routes
 
 @Composable
-fun LoginButton() {
+fun LoginButton(
+    navController: NavController
+) {
     Button(
-        onClick = {},
+        onClick = {
+            navController.navigate(Routes.Home)
+        },
         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF0064E0)),
         modifier = Modifier
             .fillMaxWidth()

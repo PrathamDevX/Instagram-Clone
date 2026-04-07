@@ -1,9 +1,9 @@
-package com.example.instagramclone.components.login
+package com.example.instagramclone.components.createAccount
 
-import android.annotation.SuppressLint
-import android.app.Activity
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -11,25 +11,25 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import com.example.instagramclone.Navigation.Routes
 
 @Composable
-fun CloseButton() {
-
-    val context = LocalContext.current
-
+fun BackButton(
+    navController: NavController
+) {
     IconButton(
         onClick = {
-            (context as? Activity)?.finish()
+            navController.navigate(Routes.Login)
         },
         colors = IconButtonDefaults.iconButtonColors(Color.Transparent)
     ) {
         Icon(
-            imageVector = Icons.Filled.Close,
+            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
             contentDescription = null,
             tint = Color.White,
-            modifier = Modifier.size(30.dp)
+            modifier = Modifier.size(22.dp)
         )
     }
 }
