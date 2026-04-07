@@ -1,4 +1,4 @@
-package com.example.instagramclone.Ui.createAccount
+package com.example.instagramclone.Ui.createAccount.emailSignup
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -17,10 +17,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.instagramclone.components.createAccount.AlreadyAccButton
-import com.example.instagramclone.components.createAccount.BackButton
-import com.example.instagramclone.components.createAccount.MobCreation.ContinueWithEmailButton
-import com.example.instagramclone.components.createAccount.MobCreation.MobField
+import com.example.instagramclone.components.createAccount.mobCreation.BackButton
 import com.example.instagramclone.components.createAccount.NextButton
+import com.example.instagramclone.components.createAccount.emailCreation.ContinueWithMobNo
+import com.example.instagramclone.components.createAccount.emailCreation.EmailField
 
 @Composable
 fun EmailSignup(
@@ -36,9 +36,9 @@ fun EmailSignup(
 
         BackButton(navController)
 
-        Headline()
+        EmailHeadline()
 
-        MobField(navController)
+        EmailField(navController)
 
         Spacer(modifier = Modifier.height(10.dp))
 
@@ -46,7 +46,7 @@ fun EmailSignup(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        ContinueWithEmailButton(navController)
+        ContinueWithMobNo(navController)
 
         Column(
             Modifier

@@ -34,7 +34,7 @@ fun LoginInputFields() {
             onValueChange = { username = it },
             label = {
                 Text(
-                    "Username, email address or mobile numb..",
+                    "Username, email address or Mobile numb..",
                     color = Color(0xFFBEC2D5),
                     maxLines = 1,
                     fontSize = 15.sp

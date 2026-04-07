@@ -1,36 +1,39 @@
-package com.example.instagramclone.components.login
+package com.example.instagramclone.components.createAccount.emailCreation
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.instagramclone.Navigation.Routes
 
 @Composable
-fun CreateNewAccButton(
+fun ContinueWithMobNo(
     navController: NavController
 ) {
-    OutlinedButton(
+    Button(
         onClick = {
             navController.navigate(Routes.MobNoSignup)
         },
-        shape = RoundedCornerShape(20.dp),
-        border = BorderStroke(1.dp, Color(0xFF488CCC)),
+        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF28292D)),
         modifier = Modifier
             .fillMaxWidth()
             .padding(start = 12.dp, end = 12.dp)
+            .height(45.dp),
+        shape = RoundedCornerShape(24.dp)
     ) {
         Text(
-            "Create new account",
-            color = Color(0xFF488CCC)
+            "Sign up with mobile number",
+            fontSize = 15.sp,
+            color = Color(0xFFB4B8BD)
         )
     }
 }

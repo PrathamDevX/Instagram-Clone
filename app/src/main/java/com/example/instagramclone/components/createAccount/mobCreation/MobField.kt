@@ -1,4 +1,4 @@
-package com.example.instagramclone.components.createAccount.MobCreation
+package com.example.instagramclone.components.createAccount.MobNoCreation
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -18,13 +18,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.instagramclone.components.createAccount.mobCreation.LearnMoreText
 
 @Composable
-fun MobField(
+fun MobNoField(
     navController: NavController
 ) {
 
-    var username by remember { mutableStateOf("") }
+    var mobNo by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
@@ -32,8 +33,8 @@ fun MobField(
             .padding(12.dp)
     ) {
         OutlinedTextField(
-            value = username,
-            onValueChange = { username = it },
+            value = mobNo,
+            onValueChange = { mobNo = it },
             placeholder = {
                 Text(
                     "Mobile number",

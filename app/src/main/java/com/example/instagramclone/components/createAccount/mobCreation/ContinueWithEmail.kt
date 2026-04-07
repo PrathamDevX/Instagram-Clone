@@ -1,4 +1,4 @@
-package com.example.instagramclone.components.createAccount.MobCreation
+package com.example.instagramclone.components.createAccount.MobNoCreation
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -21,7 +21,7 @@ fun ContinueWithEmailButton(
 ) {
     Button(
         onClick = {
-            navController.navigate(Routes.Otp)
+            navController.navigate(Routes.EmailSignup)
         },
         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF28292D)),
         modifier = Modifier

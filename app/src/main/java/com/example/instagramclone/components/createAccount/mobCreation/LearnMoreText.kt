@@ -1,4 +1,4 @@
-package com.example.instagramclone.components.createAccount.MobCreation
+package com.example.instagramclone.components.createAccount.mobCreation
 
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.runtime.Composable

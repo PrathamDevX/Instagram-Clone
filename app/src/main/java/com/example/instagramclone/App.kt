@@ -1,13 +1,15 @@
 package com.example.instagramclone
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.instagramclone.Ui.createAccount.MobSignup
+import com.example.instagramclone.Ui.createAccount.MobNolSignup.MobNoSignup
 import com.example.instagramclone.Ui.login.Login
 import com.example.instagramclone.Navigation.Routes
 import com.example.instagramclone.Ui.LearnMore.LearnMore
+import com.example.instagramclone.Ui.createAccount.emailSignup.EmailSignup
 import com.example.instagramclone.Ui.createAccount.Otp
 import com.example.instagramclone.Ui.home.Home
 
@@ -28,8 +30,8 @@ fun App() {
             Login(navController)
         }
 
-        composable(Routes.MobSignup){
-            MobSignup(navController)
+        composable(Routes.MobNoSignup){
+            MobNoSignup(navController)
         }
 
         composable(Routes.LearnMore){
@@ -38,6 +40,10 @@ fun App() {
 
         composable(Routes.Otp){
             Otp(navController)
+        }
+
+        composable(Routes.EmailSignup) {
+            EmailSignup(navController)
         }
     }
 }

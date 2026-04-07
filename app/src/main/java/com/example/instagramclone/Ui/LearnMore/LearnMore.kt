@@ -2,6 +2,7 @@ package com.example.instagramclone.Ui.LearnMore
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
@@ -15,13 +16,12 @@ import androidx.navigation.NavController
 fun LearnMore(
     navController: NavController
 ) {
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color(0xFF162127)),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+        contentAlignment = Alignment.Center
+    ){
         Text("Coming soon.....", color = Color.White)
     }
 }
