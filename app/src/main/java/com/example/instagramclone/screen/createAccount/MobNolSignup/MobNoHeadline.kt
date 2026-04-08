@@ -1,4 +1,4 @@
-package com.example.instagramclone.Ui.createAccount.MobNolSignup
+package com.example.instagramclone.screen.createAccount.MobNolSignup
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer

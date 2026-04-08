@@ -1,4 +1,4 @@
-package com.example.instagramclone.Ui.login
+package com.example.instagramclone.screen.login
 
 
 import androidx.compose.foundation.background

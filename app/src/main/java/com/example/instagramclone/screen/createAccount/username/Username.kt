@@ -1,27 +1,26 @@
-package com.example.instagramclone.Ui.LearnMore
+package com.example.instagramclone.screen.createAccount.username
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.navigation.NavController
 
 @Composable
-fun LearnMore(
+fun Username(
     navController: NavController
 ) {
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF162127)),
-        contentAlignment = Alignment.Center
-    ){
-        Text("Coming soon.....", color = Color.White)
+            .statusBarsPadding()
+            .navigationBarsPadding()
+            .background(Color(0xFF162127))
+    ) {
+
     }
 }

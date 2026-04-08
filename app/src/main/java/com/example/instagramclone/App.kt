@@ -1,17 +1,18 @@
 package com.example.instagramclone
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.instagramclone.Ui.createAccount.MobNolSignup.MobNoSignup
-import com.example.instagramclone.Ui.login.Login
+import com.example.instagramclone.screen.createAccount.MobNolSignup.MobNoSignup
+import com.example.instagramclone.screen.login.Login
 import com.example.instagramclone.Navigation.Routes
-import com.example.instagramclone.Ui.LearnMore.LearnMore
-import com.example.instagramclone.Ui.createAccount.emailSignup.EmailSignup
-import com.example.instagramclone.Ui.createAccount.Otp
-import com.example.instagramclone.Ui.home.Home
+import com.example.instagramclone.screen.LearnMore.LearnMore
+import com.example.instagramclone.screen.createAccount.birthdayInput.BirthdayInput
+import com.example.instagramclone.screen.createAccount.emailSignup.EmailSignup
+import com.example.instagramclone.screen.otp.Otp
+import com.example.instagramclone.screen.createAccount.password.PasswordCreation
+import com.example.instagramclone.screen.home.Home
 
 @Composable
 fun App() {
@@ -38,12 +39,21 @@ fun App() {
             LearnMore(navController)
         }
 
-        composable(Routes.Otp){
-            Otp(navController)
+        composable(Routes.Otp){backStackEntry ->
+            val type = backStackEntry.arguments?.getString("type")
+            Otp(navController, type)
         }
 
         composable(Routes.EmailSignup) {
             EmailSignup(navController)
+        }
+
+        composable(Routes.Password){
+            PasswordCreation(navController)
+        }
+
+        composable(Routes.BirthdayInput) {
+            BirthdayInput(navController)
         }
     }
 }

@@ -1,4 +1,4 @@
-package com.example.instagramclone.components.createAccount
+package com.example.instagramclone.components.createAccount.emailCreation
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height

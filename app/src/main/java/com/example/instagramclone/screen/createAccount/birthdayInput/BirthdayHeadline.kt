@@ -1,4 +1,4 @@
-package com.example.instagramclone.Ui.createAccount.emailSignup
+package com.example.instagramclone.screen.createAccount.birthdayInput
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -15,14 +15,14 @@ import androidx.compose.ui.unit.sp
 import com.example.instagramclone.ui.theme.InstagramSans
 
 @Composable
-fun EmailHeadline() {
+fun BirthdayHeadline() {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(12.dp)
     ) {
         Text(
-            "What's your email address?",
+            "What's your date of birth?",
             color = Color.White,
             fontSize = 26.sp,
             fontFamily = InstagramSans,
@@ -33,7 +33,7 @@ fun EmailHeadline() {
         Spacer(modifier = Modifier.height(10.dp))
 
         Text(
-            "Enter the email at which you can be contacted. No one will see this on your profile.",
+            "Use your own date of birth, even if this account is for a business, a pet or something else. No one will see this unless you choose to share it.",
             color = Color(0xEEEFEFEF),
             fontSize = 17.sp,
             fontFamily = InstagramSans,

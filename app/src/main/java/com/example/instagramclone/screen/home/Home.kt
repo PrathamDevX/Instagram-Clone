@@ -1,10 +1,10 @@
-package com.example.instagramclone.Ui.createAccount
+package com.example.instagramclone.screen.home
 
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavController
 
 @Composable
-fun Otp(
+fun Home(
     navController: NavController
 ) {
 

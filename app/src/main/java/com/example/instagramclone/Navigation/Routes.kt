@@ -5,6 +5,8 @@ object Routes {
     const val Login = "login"
     const val MobNoSignup = "MobNoSignup"
     const val LearnMore = "learnMore"
-    const val Otp = "otp"
+    const val Otp = "otp/{type}"
     const val EmailSignup = "emailSignup"
+    const val Password = "password"
+    const val BirthdayInput = "birthdayInput"
 }
