@@ -1,0 +1,3 @@
+- [x] Register `PasswordCreation` route in `App.kt`
+- [x] Verify build
+- [/] Manual verification in emulator

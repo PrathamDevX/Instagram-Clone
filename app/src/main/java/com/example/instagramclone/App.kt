@@ -4,15 +4,18 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.instagramclone.screen.createAccount.MobNolSignup.MobNoSignup
-import com.example.instagramclone.screen.login.Login
-import com.example.instagramclone.Navigation.Routes
-import com.example.instagramclone.screen.LearnMore.LearnMore
-import com.example.instagramclone.screen.createAccount.birthdayInput.BirthdayInput
-import com.example.instagramclone.screen.createAccount.emailSignup.EmailSignup
-import com.example.instagramclone.screen.otp.Otp
-import com.example.instagramclone.screen.createAccount.password.PasswordCreation
-import com.example.instagramclone.screen.home.Home
+import com.example.instagramclone.feature.signup.PasswordCreation
+import com.example.instagramclone.feature.signup.MobNoSignupScreen
+import com.example.instagramclone.feature.login.LoginScreen
+import com.example.instagramclone.navigation.Routes
+import com.example.instagramclone.feature.learnmore.LearnMoreScreen
+import com.example.instagramclone.feature.findYourAcc.FindYourAccScreen
+import com.example.instagramclone.feature.otp.Otp
+import com.example.instagramclone.feature.home.Home
+import com.example.instagramclone.feature.signup.BirthdayInputScreen
+import com.example.instagramclone.feature.signup.EmailSignupScreen
+import com.example.instagramclone.feature.signup.NameScreen
+import com.example.instagramclone.feature.signup.UsernameScreen
 
 @Composable
 fun App() {
@@ -20,40 +23,51 @@ fun App() {
 
     NavHost(
         navController = navController,
-        startDestination = Routes.Login
+        startDestination = Routes.Home
     ){
-
-        composable (Routes.Home){
+        composable(Routes.Home){
             Home(navController)
         }
 
-        composable (Routes.Login){
-            Login(navController)
+        composable(Routes.Login){
+            LoginScreen(navController)
         }
 
         composable(Routes.MobNoSignup){
-            MobNoSignup(navController)
+            MobNoSignupScreen(navController)
         }
 
         composable(Routes.LearnMore){
-            LearnMore(navController)
+            LearnMoreScreen(navController)
         }
 
-        composable(Routes.Otp){backStackEntry ->
+        composable(Routes.Otp){ backStackEntry ->
             val type = backStackEntry.arguments?.getString("type")
             Otp(navController, type)
         }
 
         composable(Routes.EmailSignup) {
-            EmailSignup(navController)
+            EmailSignupScreen(navController)
         }
 
-        composable(Routes.Password){
-            PasswordCreation(navController)
+        composable(Routes.Name) {
+            NameScreen(navController)
+        }
+
+        composable(Routes.Username) {
+            UsernameScreen(navController)
         }
 
         composable(Routes.BirthdayInput) {
-            BirthdayInput(navController)
+            BirthdayInputScreen(navController)
+        }
+
+        composable(Routes.Password) {
+            PasswordCreation(navController)
+        }
+
+        composable(Routes.FindYourAcc){
+            FindYourAccScreen(navController)
         }
     }
 }

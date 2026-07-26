@@ -1,3 +1,72 @@
 <resources>
     <string name="app_name">Instagram(Clone)</string>
+
+    <!-- Login -->
+    <string name="login_language_selector">English (UK)</string>
+    <string name="login_username_hint">Username, email address or Mobile numb..</string>
+    <string name="login_password_hint">Password</string>
+    <string name="login_button">Log in</string>
+    <string name="login_forgot_password">Forgotten password?</string>
+    <string name="login_create_new_account">Create new account</string>
+    <string name="login_meta">Meta</string>
+
+    <!-- Signup General -->
+    <string name="signup_already_have_account">I already have an account</string>
+    <string name="signup_next">Next</string>
+
+    <!-- Signup Mobile -->
+    <string name="signup_mob_headline">What\'s your mobile number?</string>
+    <string name="signup_mob_description">Enter the mobile number on which you can be contacted. No one will see this on your profile.</string>
+    <string name="signup_mob_hint">Mobile number</string>
+    <string name="signup_mob_learn_more_prefix">You may receive WhatsApp and SMS notifications from us. </string>
+    <string name="signup_mob_learn_more_link">Learn more</string>
+    <string name="signup_mob_continue_with_email">Sign up with email address</string>
+
+    <!-- Signup Email -->
+    <string name="signup_email_headline">What\'s your email address?</string>
+    <string name="signup_email_description">Enter the email at which you can be contacted. No one will see this on your profile.</string>
+    <string name="signup_email_hint">Email Address</string>
+    <string name="signup_email_continue_with_mob">Sign up with mobile number</string>
+
+    <!-- Signup Name -->
+    <string name="signup_name_headline">Add your name</string>
+    <string name="signup_name_description">Add your name so that friends can find you.</string>
+    <string name="signup_name_hint">Full name</string>
+
+    <!-- Signup Username -->
+    <string name="signup_username_headline">Create a username</string>
+    <string name="signup_username_description">Choose a username for your new account. You can always change it later.</string>
+    <string name="signup_username_hint">Username</string>
+
+    <!-- Signup Password -->
+    <string name="signup_password_headline">Create a password</string>
+    <string name="signup_password_description">Create a password with at least six letters or numbers. It should be something that others can\'t guess.</string>
+    <string name="signup_password_hint">Password</string>
+
+    <!-- Signup Birthday -->
+    <string name="signup_birthday_headline">What\'s your date of birth?</string>
+    <string name="signup_birthday_description">Use your own date of birth, even if this account is for a business, a pet or something else. No one will see this unless you choose to share it.</string>
+    <string name="signup_birthday_hint">Date of birth</string>
+    <string name="cancel">CANCEL</string>
+    <string name="set">SET</string>
+
+    <!-- OTP -->
+    <string name="otp_headline">Enter the confirmation code</string>
+    <string name="otp_description">To confirm your profile, enter the 6-digit code that we\'ve sent via WhatsApp</string>
+    <string name="otp_code_not_received">I didn\'t receive the code</string>
+    <string name="otp_hint">Confirmation code</string>
+
+    <!-- Find Your Account -->
+    <string name="find_acc_headline">Find your account</string>
+    <string name="find_acc_description">Enter your email address or username.</string>
+    <string name="find_acc_hint">Email address or username</string>
+    <string name="find_acc_cant_reset_prefix">Can\'t reset your password? </string>
+    <string name="find_acc_hacked_link">I think my account is hacked</string>
+
+    <!-- Accessibility -->
+    <string name="show_password">Show password</string>
+    <string name="hide_password">Hide password</string>
+
+    <!-- Misc -->
+    <string name="coming_soon">Coming soon&#8230;</string>
 </resources>
