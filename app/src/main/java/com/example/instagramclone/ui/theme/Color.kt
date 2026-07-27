@@ -11,7 +11,7 @@ val PurpleGrey40 = Color(0xFF625b71)
 val Pink40 = Color(0xFF7D5260)
 
 // Instagram Clone Palette
-val InstagramBlack = Color(0xFF162127)
+val InstagramBlack = Color(0xFF000000)
 val InstagramDarkGrey = Color(0xFF1F1F21)
 val InstagramDialogGrey = Color(0xFF1C1C1E)
 val InstagramBlue = Color(0xFF0064E0)

@@ -22,6 +22,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -30,12 +32,15 @@ import com.example.instagramclone.R
 import com.example.instagramclone.feature.home.Post
 import com.example.instagramclone.feature.home.Story
 import com.example.instagramclone.feature.home.dummyStories
+import com.example.instagramclone.ui.theme.Billabong
 import com.example.instagramclone.ui.theme.InstagramBlack
 import com.example.instagramclone.ui.theme.InstagramHeadline
 import com.example.instagramclone.ui.theme.InstagramSans
 
 @Composable
 fun HomeTopBar() {
+
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -53,7 +58,7 @@ fun HomeTopBar() {
 
         Text(
             text = "Instagram",
-            fontFamily = InstagramHeadline,
+            fontFamily = Billabong,
             fontSize = 28.sp,
             color = Color.White,
             modifier = Modifier.padding(bottom = 4.dp)
@@ -159,7 +164,7 @@ fun PostItem(post: Post) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(8.dp),
+                .padding(horizontal = 12.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -215,7 +220,7 @@ fun PostItem(post: Post) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(8.dp),
+                .padding(horizontal = 12.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -228,29 +233,30 @@ fun PostItem(post: Post) {
                 )
                 Spacer(modifier = Modifier.width(16.dp))
                 Icon(
-                    imageVector = Icons.Outlined.ModeComment,
+                    painter = painterResource(id = R.drawable.chat),
                     contentDescription = "Comment",
                     tint = Color.White,
                     modifier = Modifier.size(26.dp)
                 )
                 Spacer(modifier = Modifier.width(16.dp))
                 Icon(
-                    imageVector = Icons.AutoMirrored.Outlined.Send,
+                    painter = painterResource(id = R.drawable.send),
                     contentDescription = "Share",
                     tint = Color.White,
-                    modifier = Modifier.size(26.dp)
+                    modifier = Modifier.size(25
+                        .dp)
                 )
             }
             Icon(
-                imageVector = Icons.Outlined.BookmarkBorder,
+                painter = painterResource(id = R.drawable.bookmark),
                 contentDescription = "Bookmark",
                 tint = Color.White,
-                modifier = Modifier.size(28.dp)
+                modifier = Modifier.size(24.dp)
             )
         }
 
         // Likes and Caption
-        Column(modifier = Modifier.padding(horizontal = 8.dp)) {
+        Column(modifier = Modifier.padding(horizontal = 12.dp)) {
             Text(
                 text = "${post.likesCount} likes",
                 color = Color.White,
@@ -289,13 +295,14 @@ fun PostItem(post: Post) {
 @Composable
 fun HomeBottomNavigation() {
     NavigationBar(
+        modifier = Modifier.height(60.dp),
         containerColor = InstagramBlack,
         tonalElevation = 0.dp
     ) {
         NavigationBarItem(
             selected = true,
             onClick = {},
-            icon = { Icon(Icons.Outlined.Home, contentDescription = "Home", modifier = Modifier.size(30.dp)) },
+            icon = { Icon(painter = painterResource(id = R.drawable.house), contentDescription = "Home", modifier = Modifier.size(28.dp)) },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = Color.White,
                 unselectedIconColor = Color.White,
@@ -305,7 +312,7 @@ fun HomeBottomNavigation() {
         NavigationBarItem(
             selected = false,
             onClick = {},
-            icon = { Icon(Icons.Outlined.PlayCircle, contentDescription = "Reels", modifier = Modifier.size(30.dp)) },
+            icon = { Icon(painter = painterResource(id = R.drawable.play), contentDescription = "Reels", modifier = Modifier.size(25.dp)) },
             colors = NavigationBarItemDefaults.colors(
                 unselectedIconColor = Color.White,
                 indicatorColor = Color.Transparent
@@ -314,7 +321,7 @@ fun HomeBottomNavigation() {
         NavigationBarItem(
             selected = false,
             onClick = {},
-            icon = { Icon(Icons.Outlined.AddBox, contentDescription = "Post", modifier = Modifier.size(30.dp)) },
+            icon = { Icon(painter = painterResource(id = R.drawable.send), contentDescription = "Post", modifier = Modifier.size(25.dp)) },
             colors = NavigationBarItemDefaults.colors(
                 unselectedIconColor = Color.White,
                 indicatorColor = Color.Transparent
@@ -323,7 +330,7 @@ fun HomeBottomNavigation() {
         NavigationBarItem(
             selected = false,
             onClick = {},
-            icon = { Icon(Icons.Outlined.Search, contentDescription = "Search", modifier = Modifier.size(30.dp)) },
+            icon = { Icon(painter = painterResource(id = R.drawable.search), contentDescription = "Search", modifier = Modifier.size(25.dp)) },
             colors = NavigationBarItemDefaults.colors(
                 unselectedIconColor = Color.White,
                 indicatorColor = Color.Transparent

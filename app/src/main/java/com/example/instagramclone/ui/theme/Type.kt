@@ -23,8 +23,10 @@ val InstagramSans = FontFamily(
     Font(R.font.instagram_sans_regular, FontWeight.Normal),
     Font(R.font.instagram_sans_medium, FontWeight.Medium),
     Font(R.font.instagram_sans_bold, FontWeight.Bold),
-    Font(R.font.instagram_sans_light, FontWeight.Light),
+    Font(R.font.instagram_sans_light, FontWeight.Light)
 )
+
+val Billabong = FontFamily(Font(R.font.billabong, FontWeight.Normal))
 
 val InstagramHeadline = FontFamily(
     Font(R.font.instagram_sans_headline, FontWeight.Normal)
