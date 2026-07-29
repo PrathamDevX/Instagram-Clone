@@ -119,22 +119,20 @@ fun ProfileHeader(
                 contentAlignment = Alignment.BottomEnd,
                 modifier = Modifier.clickable { onImageClick() }
             ) {
-                if (profileImageUrl.isNotEmpty()) {
-                    GlideImage(
-                        model = profileImageUrl,
-                        contentDescription = "Profile Picture",
-                        modifier = Modifier
-                            .size(85.dp)
-                            .clip(CircleShape)
-                            .border(1.dp, Color.Gray, CircleShape)
-                    )
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .size(85.dp)
-                            .clip(CircleShape)
-                            .background(Color.Gray)
-                    )
+                Box(
+                    modifier = Modifier
+                        .size(85.dp)
+                        .clip(CircleShape)
+                        .background(androidx.compose.ui.graphics.Color.Gray)
+                ) {
+                    if (profileImageUrl.isNotEmpty()) {
+                        GlideImage(
+                            model = profileImageUrl,
+                            contentDescription = "Profile Picture",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
                 }
                 
                 Box(
