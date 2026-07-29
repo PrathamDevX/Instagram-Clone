@@ -7,26 +7,35 @@ import retrofit2.http.Body
 import retrofit2.http.Header
 import retrofit2.http.POST
 
+data class Sender(
+    val name: String,
+    val email: String
+)
+
+data class Recipient(
+    val email: String
+)
+
 data class EmailRequest(
-    val from: String,
-    val to: String,
+    val sender: Sender,
+    val to: List<Recipient>,
     val subject: String,
-    val html: String
+    val htmlContent: String
 )
 
 data class EmailResponse(
-    val id: String
+    val messageId: String
 )
 
 interface EmailService {
-    @POST("emails")
+    @POST("smtp/email")
     suspend fun sendEmail(
-        @Header("Authorization") apiKey: String,
+        @Header("api-key") apiKey: String,
         @Body request: EmailRequest
     ): Response<EmailResponse>
 
     companion object {
-        private const val BASE_URL = "https://api.resend.com/"
+        private const val BASE_URL = "https://api.brevo.com/v3/"
 
         fun create(): EmailService {
             return Retrofit.Builder()

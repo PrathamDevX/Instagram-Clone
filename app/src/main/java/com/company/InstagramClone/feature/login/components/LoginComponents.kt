@@ -135,16 +135,33 @@ fun LoginButton(navController: NavController, onLoginClick: () -> Unit) {
 }
 
 @Composable
-fun ForgetButton() {
+fun ForgetButton(onForgotClick: () -> Unit) {
     Box(
         modifier = Modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center
     ) {
-        TextButton(onClick = {}) {
+        TextButton(onClick = onForgotClick) {
             Text(
                 text = stringResource(R.string.login_forgot_password),
-                fontSize = 16.sp,
+                fontSize = 14.sp,
                 color = Color.White
+            )
+        }
+    }
+}
+
+@Composable
+fun LoginWithOtpButton(onClick: () -> Unit) {
+    Box(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        TextButton(onClick = onClick) {
+            Text(
+                text = "Login with verification code",
+                fontSize = 14.sp,
+                color = Color.White,
+                fontWeight = FontWeight.Bold
             )
         }
     }

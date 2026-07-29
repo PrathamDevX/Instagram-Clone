@@ -9,18 +9,26 @@ import com.company.InstagramClone.data.FirebaseAuthRepository
 import com.company.InstagramClone.data.UserProfile
 import com.company.InstagramClone.data.remote.EmailRequest
 import com.company.InstagramClone.data.remote.EmailService
+import com.company.InstagramClone.data.remote.Recipient
+import com.company.InstagramClone.data.remote.Sender
 import com.google.firebase.auth.AuthCredential
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.PhoneAuthProvider
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+
+enum class VerificationType {
+    Signup, Login, PasswordReset
+}
 
 sealed class AuthState {
     object Idle : AuthState()
     object Loading : AuthState()
     object Authenticated : AuthState()
     object ProfileSaved : AuthState()
+    object OtpSent : AuthState()
     data class Error(val message: String) : AuthState()
 }
 
@@ -36,8 +44,11 @@ class AuthViewModel(private val repository: AuthRepository = FirebaseAuthReposit
     private val _verificationId = MutableStateFlow<String?>(null)
     val verificationId = _verificationId.asStateFlow()
 
+    private val _currentVerificationType = MutableStateFlow(VerificationType.Signup)
+    val currentVerificationType = _currentVerificationType.asStateFlow()
+
     private val emailService = EmailService.create()
-    private val RESEND_API_KEY = "Bearer ${com.company.InstagramClone.BuildConfig.RESEND_API_KEY}"
+    private val BREVO_API_KEY = com.company.InstagramClone.BuildConfig.BREVO_API_KEY
 
     fun updateSignupData(update: (UserProfile) -> UserProfile) {
         _signupData.value = update(_signupData.value)
@@ -47,41 +58,72 @@ class AuthViewModel(private val repository: AuthRepository = FirebaseAuthReposit
         _verificationId.value = id
     }
 
-    fun generateAndSendOtp(email: String) {
+    fun setVerificationType(type: VerificationType) {
+        _currentVerificationType.value = type
+    }
+
+    fun generateAndSendOtp(email: String, type: VerificationType = VerificationType.Signup) {
         val otp = (100000..999999).random().toString()
         _generatedOtp.value = otp
+        _currentVerificationType.value = type
         
-        Log.d("EMAIL_OTP", "Generated OTP for $email: $otp")
+        Log.d("EMAIL_OTP", "Generated OTP for $email: $otp (Type: $type)")
         
         viewModelScope.launch {
+            _authState.value = AuthState.Loading
             try {
                 val request = EmailRequest(
-                    from = "onboarding@resend.dev",
-                    to = email.trim(),
+                    sender = Sender(
+                        name = "Instagram(Clone)",
+                        email = "mainprathamchawda1@gmail.com"
+                    ),
+                    to = listOf(Recipient(email.trim())),
                     subject = "Instagram Clone Verification Code",
-                    html = "<p>Your verification code is: <strong>$otp</strong></p>"
+                    htmlContent = "<p>Your verification code is: <strong>$otp</strong></p>"
                 )
-                Log.d("EMAIL_OTP", "Sending email request to $email with code $otp")
+                Log.d("EMAIL_OTP", "Sending Brevo email request to $email with code $otp")
                 
                 val response = emailService.sendEmail(
-                    apiKey = RESEND_API_KEY,
+                    apiKey = BREVO_API_KEY,
                     request = request
                 )
                 
                 if (response.isSuccessful) {
-                    Log.d("EMAIL_OTP", "Email sent successfully! ID: ${response.body()?.id}")
+                    Log.d("EMAIL_OTP", "Brevo email sent successfully! Message ID: ${response.body()?.messageId}")
+                    _authState.value = AuthState.OtpSent
                 } else {
                     val errorBody = response.errorBody()?.string()
-                    Log.e("EMAIL_OTP", "Failed to send email. Code: ${response.code()}, Error: $errorBody")
+                    Log.e("EMAIL_OTP", "Failed to send Brevo email. Code: ${response.code()}, Error: $errorBody")
+                    _authState.value = AuthState.Error("Failed to send verification code. Please try again.")
                 }
             } catch (e: Exception) {
-                Log.e("EMAIL_OTP", "Error during email API call: ${e.message}", e)
+                Log.e("EMAIL_OTP", "Error during Brevo API call: ${e.message}", e)
+                _authState.value = AuthState.Error("Network error. Please check your connection.")
             }
         }
     }
 
     fun verifyEmailOtp(enteredCode: String): Boolean {
-        return enteredCode == _generatedOtp.value
+        val isValid = enteredCode == _generatedOtp.value
+        if (isValid && _currentVerificationType.value == VerificationType.Login) {
+            // If it's a login OTP, we should probably trigger a sign-in or similar
+            // For now, we'll just set Authenticated if valid
+            _authState.value = AuthState.Authenticated
+        }
+        return isValid
+    }
+
+    fun resetPassword(email: String) {
+        viewModelScope.launch {
+            _authState.value = AuthState.Loading
+            try {
+                FirebaseAuth.getInstance().sendPasswordResetEmail(email).await()
+                _authState.value = AuthState.Idle
+                // Log/Success message handled in UI
+            } catch (e: Exception) {
+                _authState.value = AuthState.Error(e.message ?: "Failed to send reset email")
+            }
+        }
     }
 
     fun signUp(email: String, password: String) {

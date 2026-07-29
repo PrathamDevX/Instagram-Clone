@@ -26,8 +26,8 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        val resendApiKey = localProperties.getProperty("RESEND_API_KEY") ?: ""
-        buildConfigField("String", "RESEND_API_KEY", "\"$resendApiKey\"")
+        val brevoApiKey = localProperties.getProperty("BREVO_API_KEY") ?: ""
+        buildConfigField("String", "BREVO_API_KEY", "\"$brevoApiKey\"")
 
         val cloudName = localProperties.getProperty("CLOUDINARY_CLOUD_NAME") ?: ""
         val cloudinaryApiKey = localProperties.getProperty("CLOUDINARY_API_KEY") ?: ""

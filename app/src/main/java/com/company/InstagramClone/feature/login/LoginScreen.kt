@@ -1,25 +1,15 @@
 package com.company.InstagramClone.feature.login
 
+import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -27,6 +17,8 @@ import com.company.InstagramClone.feature.login.components.*
 import com.company.InstagramClone.ui.theme.InstagramDarkGrey
 import com.company.InstagramClone.ui.viewmodel.AuthState
 import com.company.InstagramClone.ui.viewmodel.AuthViewModel
+import com.company.InstagramClone.ui.viewmodel.VerificationType
+import com.company.InstagramClone.navigation.Routes
 
 @Composable
 fun LoginScreen(
@@ -36,12 +28,29 @@ fun LoginScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     val authState by viewModel.authState.collectAsState()
+    val context = LocalContext.current
 
-    if (authState is AuthState.Authenticated) {
-        navController.navigate(com.company.InstagramClone.navigation.Routes.Home) {
-            popUpTo(com.company.InstagramClone.navigation.Routes.Login) { inclusive = true }
+    LaunchedEffect(authState) {
+        when (authState) {
+            is AuthState.Authenticated -> {
+                navController.navigate(Routes.Home) {
+                    popUpTo(Routes.Login) { inclusive = true }
+                }
+                viewModel.resetState()
+            }
+            is AuthState.OtpSent -> {
+                val route = Routes.Otp
+                    .replace("{type}", "email")
+                    .replace("{id}", "")
+                    .replace("{email}", email)
+                navController.navigate(route)
+                viewModel.resetState()
+            }
+            is AuthState.Error -> {
+                Toast.makeText(context, (authState as AuthState.Error).message, Toast.LENGTH_LONG).show()
+            }
+            else -> {}
         }
-        viewModel.resetState()
     }
 
     Box(
@@ -50,7 +59,6 @@ fun LoginScreen(
             .background(InstagramDarkGrey)
             .statusBarsPadding()
     ) {
-        // ... (CloseButton and LanguageSelector remains the same)
         Column(
             modifier = Modifier
                 .align(Alignment.TopStart)
@@ -89,14 +97,23 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            ForgetButton()
+            ForgetButton {
+                if (email.isNotEmpty()) {
+                    viewModel.resetPassword(email)
+                    Toast.makeText(context, "Password reset email sent. Please check your inbox.", Toast.LENGTH_LONG).show()
+                } else {
+                    Toast.makeText(context, "Please enter your email first", Toast.LENGTH_SHORT).show()
+                }
+            }
 
-            if (authState is AuthState.Error) {
-                Text(
-                    text = (authState as AuthState.Error).message,
-                    color = Color.Red,
-                    modifier = Modifier.padding(16.dp)
-                )
+            Spacer(modifier = Modifier.height(12.dp))
+
+            LoginWithOtpButton {
+                if (email.isNotEmpty()) {
+                    viewModel.generateAndSendOtp(email, VerificationType.Login)
+                } else {
+                    Toast.makeText(context, "Please enter your email first", Toast.LENGTH_SHORT).show()
+                }
             }
         }
 
@@ -106,6 +123,11 @@ fun LoginScreen(
                 .padding(vertical = 14.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            if (authState is AuthState.Loading) {
+                CircularProgressIndicator(color = Color.White)
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+            
             CreateNewAccButton(navController)
 
             Spacer(modifier = Modifier.height(12.dp))

@@ -31,6 +31,8 @@ import com.company.InstagramClone.ui.viewmodel.AuthState
 import com.company.InstagramClone.ui.viewmodel.AuthViewModel
 import com.google.firebase.auth.PhoneAuthProvider
 
+import com.company.InstagramClone.ui.viewmodel.VerificationType
+
 @Composable
 fun Otp(
     navController: NavController,
@@ -41,14 +43,21 @@ fun Otp(
 ) {
     var otpCode by remember { mutableStateOf("") }
     val context = LocalContext.current
+    val verificationType by viewModel.currentVerificationType.collectAsState()
 
     val authState by viewModel.authState.collectAsState()
 
     LaunchedEffect(authState) {
         when (authState) {
             is AuthState.Authenticated -> {
-                val route = Routes.Password.replace("{email}", email ?: "")
-                navController.navigate(route)
+                if (verificationType == VerificationType.Login) {
+                    navController.navigate(Routes.Home) {
+                        popUpTo(Routes.Login) { inclusive = true }
+                    }
+                } else {
+                    val route = Routes.Password.replace("{email}", email ?: "")
+                    navController.navigate(route)
+                }
                 viewModel.resetState()
             }
             is AuthState.Error -> {
@@ -99,8 +108,19 @@ fun Otp(
                         }
                     } else if (type == "email") {
                         if (viewModel.verifyEmailOtp(otpCode)) {
-                            val route = Routes.Password.replace("{email}", email ?: "")
-                            navController.navigate(route)
+                            when (verificationType) {
+                                VerificationType.Signup -> {
+                                    val route = Routes.Password.replace("{email}", email ?: "")
+                                    navController.navigate(route)
+                                }
+                                VerificationType.Login -> {
+                                    // Handled in LaunchedEffect
+                                }
+                                else -> {
+                                    val route = Routes.Password.replace("{email}", email ?: "")
+                                    navController.navigate(route)
+                                }
+                            }
                         } else {
                             Toast.makeText(context, "Invalid OTP code", Toast.LENGTH_SHORT).show()
                         }
