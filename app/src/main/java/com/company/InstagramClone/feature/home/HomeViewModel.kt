@@ -11,7 +11,10 @@ import kotlinx.coroutines.launch
 
 sealed class HomeState {
     object Loading : HomeState()
-    data class Success(val userProfile: UserProfile?) : HomeState()
+    data class Success(
+        val userProfile: UserProfile?,
+        val posts: List<Post> = emptyList()
+    ) : HomeState()
     data class Error(val message: String) : HomeState()
 }
 
@@ -22,19 +25,36 @@ class HomeViewModel(
     val homeState = _homeState.asStateFlow()
 
     init {
-        fetchUserProfile()
+        refreshHome()
     }
 
-    fun fetchUserProfile() {
+    fun refreshHome() {
         viewModelScope.launch {
             _homeState.value = HomeState.Loading
-            repository.getUserProfile()
-                .onSuccess { profile ->
-                    _homeState.value = HomeState.Success(profile)
+            android.util.Log.d("HOME_VM", "Refreshing home data...")
+            
+            val profileResult = repository.getUserProfile()
+            val postsResult = repository.getPosts()
+            
+            if (profileResult.isSuccess && postsResult.isSuccess) {
+                _homeState.value = HomeState.Success(
+                    userProfile = profileResult.getOrNull(),
+                    posts = postsResult.getOrDefault(emptyList())
+                )
+            } else {
+                val rawError = profileResult.exceptionOrNull()?.message 
+                    ?: postsResult.exceptionOrNull()?.message 
+                    ?: "Unknown error"
+                
+                val errorMsg = if (rawError.contains("offline", ignoreCase = true)) {
+                    "The app is offline. Please check your internet connection and ensure Firestore is enabled in the Firebase Console."
+                } else {
+                    rawError
                 }
-                .onFailure { error ->
-                    _homeState.value = HomeState.Error(error.message ?: "Failed to load profile")
-                }
+                
+                android.util.Log.e("HOME_VM", "Home refresh failed: $errorMsg")
+                _homeState.value = HomeState.Error(errorMsg)
+            }
         }
     }
 

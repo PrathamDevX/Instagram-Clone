@@ -12,4 +12,6 @@ object Routes {
     const val Password = "password?email={email}"
     const val BirthdayInput = "birthdayInput"
     const val FindYourAcc = "findYourAcc"
+    const val Profile = "profile"
+    const val CreateMedia = "createMedia"
 }

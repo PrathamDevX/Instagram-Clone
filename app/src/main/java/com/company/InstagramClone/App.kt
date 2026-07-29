@@ -16,6 +16,8 @@ import com.company.InstagramClone.feature.signup.BirthdayInputScreen
 import com.company.InstagramClone.feature.signup.EmailSignupScreen
 import com.company.InstagramClone.feature.signup.NameScreen
 import com.company.InstagramClone.feature.signup.UsernameScreen
+import com.company.InstagramClone.feature.profile.ProfileScreen
+import com.company.InstagramClone.feature.create.CreateMediaScreen
 
 import androidx.navigation.navArgument
 import androidx.navigation.NavType
@@ -89,6 +91,14 @@ fun App() {
 
         composable(Routes.FindYourAcc){
             FindYourAccScreen(navController)
+        }
+
+        composable(Routes.Profile) {
+            ProfileScreen(navController)
+        }
+
+        composable(Routes.CreateMedia) {
+            CreateMediaScreen(navController)
         }
     }
 }

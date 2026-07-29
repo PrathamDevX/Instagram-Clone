@@ -15,6 +15,7 @@ interface AuthRepository {
     suspend fun signInWithCredential(credential: AuthCredential): Result<Unit>
     suspend fun saveUserProfile(profile: UserProfile): Result<Unit>
     suspend fun getUserProfile(): Result<UserProfile?>
+    suspend fun getPosts(): Result<List<com.company.InstagramClone.feature.home.Post>>
     fun signOut()
     fun verifyPhoneNumber(
         phoneNumber: String,
@@ -25,7 +26,9 @@ interface AuthRepository {
 
 class FirebaseAuthRepository(
     private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
-    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
+    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance().apply {
+        FirebaseFirestore.setLoggingEnabled(true)
+    }
 ) : AuthRepository {
     override suspend fun signUpWithEmail(email: String, password: String): Result<Unit> {
         return try {
@@ -75,10 +78,48 @@ class FirebaseAuthRepository(
     override suspend fun getUserProfile(): Result<UserProfile?> {
         return try {
             val uid = auth.currentUser?.uid ?: return Result.success(null)
+            android.util.Log.d("AUTH_REPO", "Fetching profile for UID: $uid")
             val document = firestore.collection("users").document(uid).get().await()
             val profile = document.toObject(UserProfile::class.java)
+            android.util.Log.d("AUTH_REPO", "Profile fetch success: $profile")
             Result.success(profile)
         } catch (e: Exception) {
+            android.util.Log.e("AUTH_REPO", "Profile fetch failed: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun getPosts(): Result<List<com.company.InstagramClone.feature.home.Post>> {
+        return try {
+            android.util.Log.d("AUTH_REPO", "Fetching all posts from Firestore...")
+            val snapshot = firestore.collection("posts").get().await()
+            val posts = snapshot.documents.mapNotNull { doc ->
+                try {
+                    val data = doc.data
+                    android.util.Log.d("AUTH_REPO", "Post Doc [${doc.id}]: $data")
+                    
+                    val mediaUrls = doc.get("mediaUrls") as? List<*>
+                    val firstUrl = mediaUrls?.firstOrNull()?.toString() ?: ""
+                    
+                    com.company.InstagramClone.feature.home.Post(
+                        id = doc.id.hashCode(),
+                        userId = doc.getString("userId") ?: "",
+                        username = doc.getString("username") ?: "Anonymous",
+                        userImageUrl = doc.getString("profileImageUrl") ?: "",
+                        postImageUrl = firstUrl,
+                        caption = doc.getString("caption") ?: "",
+                        likesCount = doc.getLong("likesCount")?.toInt() ?: 0,
+                        timeAgo = "Just now"
+                    )
+                } catch (e: Exception) {
+                    android.util.Log.e("AUTH_REPO", "Error mapping post doc [${doc.id}]: ${e.message}")
+                    null
+                }
+            }
+            android.util.Log.d("AUTH_REPO", "Posts fetch success. Count: ${posts.size}")
+            Result.success(posts)
+        } catch (e: Exception) {
+            android.util.Log.e("AUTH_REPO", "Posts fetch failed: ${e.message}", e)
             Result.failure(e)
         }
     }

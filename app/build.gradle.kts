@@ -28,6 +28,16 @@ android {
 
         val resendApiKey = localProperties.getProperty("RESEND_API_KEY") ?: ""
         buildConfigField("String", "RESEND_API_KEY", "\"$resendApiKey\"")
+
+        val cloudName = localProperties.getProperty("CLOUDINARY_CLOUD_NAME") ?: ""
+        val cloudinaryApiKey = localProperties.getProperty("CLOUDINARY_API_KEY") ?: ""
+        val cloudinaryApiSecret = localProperties.getProperty("CLOUDINARY_API_SECRET") ?: ""
+        val uploadPreset = localProperties.getProperty("CLOUDINARY_UPLOAD_PRESET") ?: "ml_default"
+
+        buildConfigField("String", "CLOUDINARY_CLOUD_NAME", "\"$cloudName\"")
+        buildConfigField("String", "CLOUDINARY_API_KEY", "\"$cloudinaryApiKey\"")
+        buildConfigField("String", "CLOUDINARY_API_SECRET", "\"$cloudinaryApiSecret\"")
+        buildConfigField("String", "CLOUDINARY_UPLOAD_PRESET", "\"$uploadPreset\"")
     }
 
     buildTypes {
@@ -48,10 +58,16 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+        viewBinding = true
     }
 }
 
 dependencies {
+    implementation(libs.cloudinary.android)
+    implementation(libs.glide)
+    implementation(libs.glide.compose)
+    implementation(libs.fresco) // Force 16 KB aligned version
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -67,6 +83,14 @@ dependencies {
 
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.compose.material.icons.extended)
+
+    // CameraX
+    implementation(libs.androidx.camera.core)
+    implementation(libs.androidx.camera.camera2)
+    implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.camera.video)
+    implementation(libs.androidx.camera.view)
+    implementation(libs.androidx.camera.extensions)
 
     // Firebase
     implementation(platform(libs.firebase.bom))

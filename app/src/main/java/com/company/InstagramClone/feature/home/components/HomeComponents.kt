@@ -28,17 +28,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideImage
 import com.company.InstagramClone.R
 import com.company.InstagramClone.feature.home.Post
 import com.company.InstagramClone.feature.home.Story
-import com.company.InstagramClone.feature.home.dummyStories
 import com.company.InstagramClone.ui.theme.Billabong
 import com.company.InstagramClone.ui.theme.InstagramBlack
 import com.company.InstagramClone.ui.theme.InstagramHeadline
 import com.company.InstagramClone.ui.theme.InstagramSans
 
 @Composable
-fun HomeTopBar(onLogoutClick: () -> Unit = {}) {
+fun HomeTopBar(onAddClick: () -> Unit = {}) {
 
 
     Row(
@@ -49,12 +50,12 @@ fun HomeTopBar(onLogoutClick: () -> Unit = {}) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        IconButton(onClick = onLogoutClick) {
+        IconButton(onClick = onAddClick) {
             Icon(
-                imageVector = Icons.AutoMirrored.Outlined.Logout,
-                contentDescription = "Logout",
+                imageVector = Icons.Default.Add,
+                contentDescription = "Add",
                 tint = Color.White,
-                modifier = Modifier.size(26.dp)
+                modifier = Modifier.size(28.dp)
             )
         }
 
@@ -87,9 +88,7 @@ fun StoriesSection(currentUsername: String = "Your story") {
         item {
             StoryItem(Story(0, currentUsername, ""))
         }
-        items(dummyStories.filter { it.username != "Your story" }) { story ->
-            StoryItem(story)
-        }
+        // Real stories from Firestore would go here in the future
     }
 }
 
@@ -158,6 +157,7 @@ fun StoryItem(story: Story) {
     }
 }
 
+@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun PostItem(post: Post) {
     Column(
@@ -178,13 +178,22 @@ fun PostItem(post: Post) {
                     modifier = Modifier
                         .size(35.dp)
                         .clip(CircleShape)
-                        .background(Color.Gray)
-                )
+                        .background(androidx.compose.ui.graphics.Color.Gray)
+                ) {
+                    if (post.userImageUrl.isNotEmpty()) {
+                        GlideImage(
+                            model = post.userImageUrl,
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                }
                 Spacer(modifier = Modifier.width(8.dp))
                 Column {
                     Text(
                         text = post.username,
-                        color = Color.White,
+                        color = androidx.compose.ui.graphics.Color.White,
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp,
                         fontFamily = InstagramSans
@@ -193,13 +202,13 @@ fun PostItem(post: Post) {
                         Icon(
                             imageVector = Icons.Outlined.MusicNote,
                             contentDescription = null,
-                            tint = Color.White,
+                            tint = androidx.compose.ui.graphics.Color.White,
                             modifier = Modifier.size(12.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = "${post.username} · Original audio",
-                            color = Color.White,
+                            color = androidx.compose.ui.graphics.Color.White,
                             fontSize = 12.sp,
                             fontFamily = InstagramSans
                         )
@@ -209,17 +218,26 @@ fun PostItem(post: Post) {
             Icon(
                 imageVector = Icons.Default.MoreVert,
                 contentDescription = "More",
-                tint = Color.White
+                tint = androidx.compose.ui.graphics.Color.White
             )
         }
 
-        // Post Image Placeholder
+        // Post Image
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(400.dp)
-                .background(Color.DarkGray)
-        )
+                .background(androidx.compose.ui.graphics.Color.DarkGray)
+        ) {
+            if (post.postImageUrl.isNotEmpty()) {
+                GlideImage(
+                    model = post.postImageUrl,
+                    contentDescription = "Post Image",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
+        }
 
         // Interaction Buttons
         Row(
@@ -298,15 +316,22 @@ fun PostItem(post: Post) {
 }
 
 @Composable
-fun HomeBottomNavigation() {
+fun HomeBottomNavigation(
+    selectedRoute: String = com.company.InstagramClone.navigation.Routes.Home,
+    onHomeClick: () -> Unit = {},
+    onSearchClick: () -> Unit = {},
+    onAddClick: () -> Unit = {},
+    onReelsClick: () -> Unit = {},
+    onProfileClick: () -> Unit = {}
+) {
     NavigationBar(
         modifier = Modifier.height(60.dp),
         containerColor = InstagramBlack,
         tonalElevation = 0.dp
     ) {
         NavigationBarItem(
-            selected = true,
-            onClick = {},
+            selected = selectedRoute == com.company.InstagramClone.navigation.Routes.Home,
+            onClick = onHomeClick,
             icon = { Icon(painter = painterResource(id = R.drawable.house), contentDescription = "Home", modifier = Modifier.size(28.dp)) },
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = Color.White,
@@ -316,25 +341,7 @@ fun HomeBottomNavigation() {
         )
         NavigationBarItem(
             selected = false,
-            onClick = {},
-            icon = { Icon(painter = painterResource(id = R.drawable.play), contentDescription = "Reels", modifier = Modifier.size(25.dp)) },
-            colors = NavigationBarItemDefaults.colors(
-                unselectedIconColor = Color.White,
-                indicatorColor = Color.Transparent
-            )
-        )
-        NavigationBarItem(
-            selected = false,
-            onClick = {},
-            icon = { Icon(painter = painterResource(id = R.drawable.send), contentDescription = "Post", modifier = Modifier.size(25.dp)) },
-            colors = NavigationBarItemDefaults.colors(
-                unselectedIconColor = Color.White,
-                indicatorColor = Color.Transparent
-            )
-        )
-        NavigationBarItem(
-            selected = false,
-            onClick = {},
+            onClick = onSearchClick,
             icon = { Icon(painter = painterResource(id = R.drawable.search), contentDescription = "Search", modifier = Modifier.size(25.dp)) },
             colors = NavigationBarItemDefaults.colors(
                 unselectedIconColor = Color.White,
@@ -343,11 +350,38 @@ fun HomeBottomNavigation() {
         )
         NavigationBarItem(
             selected = false,
-            onClick = {},
+            onClick = onAddClick,
+            icon = { Icon(painter = painterResource(id = R.drawable.send), contentDescription = "Post", modifier = Modifier.size(25.dp)) },
+            colors = NavigationBarItemDefaults.colors(
+                unselectedIconColor = Color.White,
+                indicatorColor = Color.Transparent
+            )
+        )
+        NavigationBarItem(
+            selected = false,
+            onClick = onReelsClick,
+            icon = { Icon(painter = painterResource(id = R.drawable.play), contentDescription = "Reels", modifier = Modifier.size(25.dp)) },
+            colors = NavigationBarItemDefaults.colors(
+                unselectedIconColor = Color.White,
+                indicatorColor = Color.Transparent
+            )
+        )
+        NavigationBarItem(
+            selected = selectedRoute == com.company.InstagramClone.navigation.Routes.Profile,
+            onClick = onProfileClick,
             icon = { 
                 Box(
                     modifier = Modifier
                         .size(30.dp)
+                        .clip(CircleShape)
+                        .then(
+                            if (selectedRoute == com.company.InstagramClone.navigation.Routes.Profile) {
+                                Modifier.border(1.5.dp, Color.White, CircleShape)
+                            } else {
+                                Modifier
+                            }
+                        )
+                        .padding(2.dp)
                         .clip(CircleShape)
                         .background(Color.Gray)
                 )
