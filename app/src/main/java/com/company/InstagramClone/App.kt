@@ -23,15 +23,19 @@ import androidx.navigation.navArgument
 import androidx.navigation.NavType
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.company.InstagramClone.ui.viewmodel.AuthViewModel
+import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun App() {
     val navController = rememberNavController()
     val authViewModel: AuthViewModel = viewModel()
+    
+    val currentUser = FirebaseAuth.getInstance().currentUser
+    val startDestination = if (currentUser != null) Routes.Home else Routes.Login
 
     NavHost(
         navController = navController,
-        startDestination = Routes.Login
+        startDestination = startDestination
     ){
         composable(Routes.Home){
             Home(navController)

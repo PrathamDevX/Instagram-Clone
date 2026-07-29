@@ -74,18 +74,12 @@ class CreateMediaViewModel(
         )
     }
 
-    fun toggleVideoRecording(
+    fun startVideoRecording(
         context: Context,
         videoCapture: VideoCapture<Recorder>,
         mode: com.company.InstagramClone.feature.create.components.CreateMode
     ) {
-        val recording = activeRecording
-        if (recording != null) {
-            recording.stop()
-            activeRecording = null
-            _isRecording.value = false
-            return
-        }
+        if (activeRecording != null) return
 
         val name = SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(System.currentTimeMillis())
         val contentValues = android.content.ContentValues().apply {
@@ -117,8 +111,29 @@ class CreateMediaViewModel(
             }
     }
 
-    private fun uploadAndSave(uri: Uri, mode: com.company.InstagramClone.feature.create.components.CreateMode) {
+    fun stopVideoRecording() {
+        activeRecording?.stop()
+        activeRecording = null
+        _isRecording.value = false
+    }
+
+    fun onMediaSelected(
+        context: Context,
+        uri: Uri,
+        mode: com.company.InstagramClone.feature.create.components.CreateMode
+    ) {
+        val type = context.contentResolver.getType(uri)
+        val isVideo = type?.startsWith("video") == true
+        uploadAndSave(uri, mode, isVideo)
+    }
+
+    private fun uploadAndSave(
+        uri: Uri,
+        mode: com.company.InstagramClone.feature.create.components.CreateMode,
+        isVideo: Boolean = false
+    ) {
         viewModelScope.launch {
+            _createState.value = CreateState.Loading
             val user = FirebaseAuth.getInstance().currentUser
             if (user == null) {
                 _createState.value = CreateState.Error("User not logged in")
@@ -128,7 +143,7 @@ class CreateMediaViewModel(
             val profileResult = repository.getUserProfile()
             val profile = profileResult.getOrNull()
 
-            val uploadResult = if (mode == com.company.InstagramClone.feature.create.components.CreateMode.REEL) {
+            val uploadResult = if (isVideo || mode == com.company.InstagramClone.feature.create.components.CreateMode.REEL) {
                 mediaRepository.uploadVideo(uri)
             } else {
                 mediaRepository.uploadImage(uri)
@@ -142,7 +157,7 @@ class CreateMediaViewModel(
                             username = profile?.username ?: "Anonymous",
                             profileImageUrl = profile?.profileImageUrl ?: "",
                             mediaUrl = url,
-                            mediaType = "image"
+                            mediaType = if (isVideo) "video" else "image"
                         ))
                     }
                     com.company.InstagramClone.feature.create.components.CreateMode.POST -> {

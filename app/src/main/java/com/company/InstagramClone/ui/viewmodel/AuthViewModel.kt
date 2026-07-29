@@ -68,6 +68,7 @@ class AuthViewModel(private val repository: AuthRepository = FirebaseAuthReposit
         _currentVerificationType.value = type
         
         Log.d("EMAIL_OTP", "Generated OTP for $email: $otp (Type: $type)")
+        Log.d("EMAIL_OTP", "Using API Key of length: ${BREVO_API_KEY.length}")
         
         viewModelScope.launch {
             _authState.value = AuthState.Loading

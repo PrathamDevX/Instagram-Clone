@@ -16,6 +16,7 @@ interface AuthRepository {
     suspend fun saveUserProfile(profile: UserProfile): Result<Unit>
     suspend fun getUserProfile(): Result<UserProfile?>
     suspend fun getPosts(): Result<List<com.company.InstagramClone.feature.home.Post>>
+    fun isUserLoggedIn(): Boolean
     fun signOut()
     fun verifyPhoneNumber(
         phoneNumber: String,
@@ -126,6 +127,10 @@ class FirebaseAuthRepository(
 
     override fun signOut() {
         auth.signOut()
+    }
+
+    override fun isUserLoggedIn(): Boolean {
+        return auth.currentUser != null
     }
 
     override fun verifyPhoneNumber(
