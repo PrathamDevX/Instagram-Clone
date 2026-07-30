@@ -6,6 +6,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.PhoneAuthOptions
 import com.google.firebase.auth.PhoneAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
+import com.company.InstagramClone.utils.CloudinaryHelper
 import kotlinx.coroutines.tasks.await
 import java.util.concurrent.TimeUnit
 
@@ -101,6 +102,10 @@ class FirebaseAuthRepository(
                     
                     val mediaUrls = doc.get("mediaUrls") as? List<*>
                     val firstUrl = mediaUrls?.firstOrNull()?.toString() ?: ""
+                    val mediaType = CloudinaryHelper.getMediaType(
+                        url = firstUrl,
+                        currentType = doc.getString("mediaType") ?: "image"
+                    )
                     
                     com.company.InstagramClone.feature.home.Post(
                         id = doc.id.hashCode(),
@@ -108,6 +113,7 @@ class FirebaseAuthRepository(
                         username = doc.getString("username") ?: "Anonymous",
                         userImageUrl = doc.getString("profileImageUrl") ?: "",
                         postImageUrl = firstUrl,
+                        mediaType = mediaType,
                         caption = doc.getString("caption") ?: "",
                         likesCount = doc.getLong("likesCount")?.toInt() ?: 0,
                         timeAgo = "Just now"

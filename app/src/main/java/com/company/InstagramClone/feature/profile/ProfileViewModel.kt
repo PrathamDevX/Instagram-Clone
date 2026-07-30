@@ -73,12 +73,12 @@ class ProfileViewModel(
         }
     }
 
-    fun uploadProfilePicture(uri: Uri) {
+    fun uploadProfilePicture(context: android.content.Context, uri: Uri) {
         viewModelScope.launch {
             val currentState = _profileState.value
             if (currentState is ProfileState.Success) {
                 _profileState.value = ProfileState.Loading
-                val uploadResult = mediaRepository.uploadImage(uri)
+                val uploadResult = mediaRepository.uploadImage(context, uri)
                 uploadResult.onSuccess { imageUrl ->
                     val updatedProfile = currentState.userProfile?.copy(profileImageUrl = imageUrl)
                     if (updatedProfile != null) {

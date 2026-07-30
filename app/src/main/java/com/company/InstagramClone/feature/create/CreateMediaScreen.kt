@@ -4,6 +4,7 @@ import android.Manifest
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
@@ -36,6 +37,8 @@ fun CreateMediaScreen(
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+
+    var selectedMode by remember { mutableStateOf(CreateMode.STORY) }
     
     var hasCameraPermission by remember { mutableStateOf(false) }
     var hasAudioPermission by remember { mutableStateOf(false) }
@@ -45,6 +48,14 @@ fun CreateMediaScreen(
     ) { permissions ->
         hasCameraPermission = permissions[Manifest.permission.CAMERA] ?: false
         hasAudioPermission = permissions[Manifest.permission.RECORD_AUDIO] ?: false
+    }
+
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            viewModel.onMediaSelected(context, uri, selectedMode)
+        }
     }
 
     LaunchedEffect(Unit) {
@@ -60,7 +71,6 @@ fun CreateMediaScreen(
 
     var lensFacing by remember { mutableStateOf(CameraSelector.LENS_FACING_BACK) }
     var flashEnabled by remember { mutableStateOf(false) }
-    var selectedMode by remember { mutableStateOf(CreateMode.STORY) }
     
     val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
     val previewView = remember { PreviewView(context) }
@@ -179,6 +189,11 @@ fun CreateMediaScreen(
                     } else {
                         CameraSelector.LENS_FACING_BACK
                     }
+                },
+                onGalleryClick = {
+                    galleryLauncher.launch(
+                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo)
+                    )
                 },
                 isRecording = isRecording
             )

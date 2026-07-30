@@ -110,6 +110,7 @@ fun Home(
 
                     items(posts) { post ->
                         PostItem(post)
+                        Spacer(modifier = Modifier.height(12.dp))
                     }
                 }
             }

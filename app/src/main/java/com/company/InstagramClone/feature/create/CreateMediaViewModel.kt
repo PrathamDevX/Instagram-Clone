@@ -21,7 +21,6 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
-import java.util.concurrent.Executor
 
 sealed class CreateState {
     object Idle : CreateState()
@@ -64,7 +63,7 @@ class CreateMediaViewModel(
             object : ImageCapture.OnImageSavedCallback {
                 override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
                     val uri = Uri.fromFile(photoFile)
-                    uploadAndSave(uri, mode)
+                    uploadAndSave(context, uri, mode)
                 }
 
                 override fun onError(exception: ImageCaptureException) {
@@ -101,7 +100,7 @@ class CreateMediaViewModel(
                     is VideoRecordEvent.Finalize -> {
                         if (!recordEvent.hasError()) {
                             val uri = recordEvent.outputResults.outputUri
-                            uploadAndSave(uri, mode)
+                            uploadAndSave(context, uri, mode, isVideo = true)
                         } else {
                             _createState.value = CreateState.Error("Video error: ${recordEvent.error}")
                         }
@@ -124,10 +123,11 @@ class CreateMediaViewModel(
     ) {
         val type = context.contentResolver.getType(uri)
         val isVideo = type?.startsWith("video") == true
-        uploadAndSave(uri, mode, isVideo)
+        uploadAndSave(context, uri, mode, isVideo)
     }
 
     private fun uploadAndSave(
+        context: Context,
         uri: Uri,
         mode: com.company.InstagramClone.feature.create.components.CreateMode,
         isVideo: Boolean = false
@@ -144,9 +144,9 @@ class CreateMediaViewModel(
             val profile = profileResult.getOrNull()
 
             val uploadResult = if (isVideo || mode == com.company.InstagramClone.feature.create.components.CreateMode.REEL) {
-                mediaRepository.uploadVideo(uri)
+                mediaRepository.uploadVideo(context, uri)
             } else {
-                mediaRepository.uploadImage(uri)
+                mediaRepository.uploadImage(context, uri)
             }
 
             uploadResult.onSuccess { url ->
@@ -165,7 +165,8 @@ class CreateMediaViewModel(
                             userId = user.uid,
                             username = profile?.username ?: "Anonymous",
                             profileImageUrl = profile?.profileImageUrl ?: "",
-                            mediaUrls = listOf(url)
+                            mediaUrls = listOf(url),
+                            mediaType = if (isVideo) "video" else "image"
                         ))
                     }
                     com.company.InstagramClone.feature.create.components.CreateMode.REEL -> {
@@ -173,7 +174,8 @@ class CreateMediaViewModel(
                             userId = user.uid,
                             username = profile?.username ?: "Anonymous",
                             profileImageUrl = profile?.profileImageUrl ?: "",
-                            videoUrl = url
+                            videoUrl = url,
+                            mediaType = "video"
                         ))
                     }
                     else -> Result.failure(Exception("Unsupported mode"))

@@ -33,6 +33,8 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.company.InstagramClone.R
 import com.company.InstagramClone.feature.home.Post
 import com.company.InstagramClone.feature.home.Story
+import com.company.InstagramClone.ui.components.VideoPlayer
+import com.company.InstagramClone.utils.CloudinaryHelper
 import com.company.InstagramClone.ui.theme.Billabong
 import com.company.InstagramClone.ui.theme.InstagramBlack
 import com.company.InstagramClone.ui.theme.InstagramHeadline
@@ -163,83 +165,9 @@ fun PostItem(post: Post) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 16.dp)
+            .padding(bottom = 8.dp)
     ) {
         // Post Header
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(35.dp)
-                        .clip(CircleShape)
-                        .background(androidx.compose.ui.graphics.Color.Gray)
-                ) {
-                    if (post.userImageUrl.isNotEmpty()) {
-                        GlideImage(
-                            model = post.userImageUrl,
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.width(8.dp))
-                Column {
-                    Text(
-                        text = post.username,
-                        color = androidx.compose.ui.graphics.Color.White,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp,
-                        fontFamily = InstagramSans
-                    )
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Outlined.MusicNote,
-                            contentDescription = null,
-                            tint = androidx.compose.ui.graphics.Color.White,
-                            modifier = Modifier.size(12.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "${post.username} · Original audio",
-                            color = androidx.compose.ui.graphics.Color.White,
-                            fontSize = 12.sp,
-                            fontFamily = InstagramSans
-                        )
-                    }
-                }
-            }
-            Icon(
-                imageVector = Icons.Default.MoreVert,
-                contentDescription = "More",
-                tint = androidx.compose.ui.graphics.Color.White
-            )
-        }
-
-        // Post Image
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(400.dp)
-                .background(androidx.compose.ui.graphics.Color.DarkGray)
-        ) {
-            if (post.postImageUrl.isNotEmpty()) {
-                GlideImage(
-                    model = post.postImageUrl,
-                    contentDescription = "Post Image",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-        }
-
-        // Interaction Buttons
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -248,59 +176,138 @@ fun PostItem(post: Post) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Outlined.FavoriteBorder,
-                    contentDescription = "Like",
-                    tint = Color.White,
-                    modifier = Modifier.size(28.dp)
-                )
-                Spacer(modifier = Modifier.width(16.dp))
-                Icon(
-                    painter = painterResource(id = R.drawable.chat),
-                    contentDescription = "Comment",
-                    tint = Color.White,
-                    modifier = Modifier.size(26.dp)
-                )
-                Spacer(modifier = Modifier.width(16.dp))
-                Icon(
-                    painter = painterResource(id = R.drawable.send),
-                    contentDescription = "Share",
-                    tint = Color.White,
-                    modifier = Modifier.size(25
-                        .dp)
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .background(androidx.compose.ui.graphics.Color.Gray)
+                ) {
+                    if (post.userImageUrl.isNotEmpty()) {
+                        GlideImage(
+                            model = CloudinaryHelper.getOptimizedUrl(post.userImageUrl, 100, 100),
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.width(10.dp))
+                Text(
+                    text = post.username,
+                    color = androidx.compose.ui.graphics.Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 13.sp,
+                    fontFamily = InstagramSans
                 )
             }
             Icon(
-                painter = painterResource(id = R.drawable.bookmark),
-                contentDescription = "Bookmark",
-                tint = Color.White,
-                modifier = Modifier.size(24.dp)
+                imageVector = Icons.Default.MoreVert,
+                contentDescription = "More",
+                tint = androidx.compose.ui.graphics.Color.White,
+                modifier = Modifier.size(20.dp)
             )
         }
 
+        // Post Media Area (Responsive Aspect Ratio)
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight()
+                .background(androidx.compose.ui.graphics.Color.Black)
+        ) {
+            if (post.postImageUrl.isNotEmpty()) {
+                val inferredType = CloudinaryHelper.getMediaType(post.postImageUrl, post.mediaType)
+                android.util.Log.d("PostItem", "Rendering post [${post.id}]: type=$inferredType, url=${post.postImageUrl}")
+                
+                if (inferredType == "video") {
+                    VideoPlayer(
+                        videoUrl = CloudinaryHelper.getOptimizedVideoUrl(post.postImageUrl),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(0.8f) // Standard portrait video ratio
+                    )
+                } else {
+                    GlideImage(
+                        model = CloudinaryHelper.getFeedUrl(post.postImageUrl),
+                        contentDescription = "Post Image",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(1f) // Standard square post ratio
+                    ) {
+                        it.thumbnail(0.1f)
+                    }
+                }
+            }
+        }
+
+        // Interaction Buttons
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 4.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = {}) {
+                    Icon(
+                        imageVector = Icons.Outlined.FavoriteBorder,
+                        contentDescription = "Like",
+                        tint = Color.White,
+                        modifier = Modifier.size(26.dp)
+                    )
+                }
+                IconButton(onClick = {}) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.chat),
+                        contentDescription = "Comment",
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+                IconButton(onClick = {}) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.send),
+                        contentDescription = "Share",
+                        tint = Color.White,
+                        modifier = Modifier.size(23.dp)
+                    )
+                }
+            }
+            IconButton(onClick = {}) {
+                Icon(
+                    painter = painterResource(id = R.drawable.bookmark),
+                    contentDescription = "Bookmark",
+                    tint = Color.White,
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+        }
+
         // Likes and Caption
-        Column(modifier = Modifier.padding(horizontal = 12.dp)) {
+        Column(modifier = Modifier.padding(horizontal = 14.dp)) {
             Text(
                 text = "${post.likesCount} likes",
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
-                fontSize = 14.sp,
+                fontSize = 13.sp,
                 fontFamily = InstagramSans
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(2.dp))
             Row {
                 Text(
                     text = post.username,
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
+                    fontSize = 13.sp,
                     fontFamily = InstagramSans
                 )
-                Spacer(modifier = Modifier.width(4.dp))
+                Spacer(modifier = Modifier.width(6.dp))
                 Text(
                     text = post.caption,
                     color = Color.White,
-                    fontSize = 14.sp,
+                    fontSize = 13.sp,
                     fontFamily = InstagramSans
                 )
             }
@@ -308,7 +315,7 @@ fun PostItem(post: Post) {
             Text(
                 text = post.timeAgo,
                 color = Color.Gray,
-                fontSize = 12.sp,
+                fontSize = 11.sp,
                 fontFamily = InstagramSans
             )
         }

@@ -13,6 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -27,12 +28,13 @@ fun ProfileScreen(
     viewModel: ProfileViewModel = viewModel()
 ) {
     val profileState by viewModel.profileState.collectAsState()
+    val context = LocalContext.current
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->
         if (uri != null) {
-            viewModel.uploadProfilePicture(uri)
+            viewModel.uploadProfilePicture(context, uri)
         }
     }
 
@@ -101,7 +103,15 @@ fun ProfileScreen(
                     
                     ProfileTabs()
                     
-                    PostsGrid(posts = data.userPosts)
+                    PostsGrid(
+                        posts = data.userPosts,
+                        onPostClick = { post ->
+                            val route = Routes.PostDetail
+                                .replace("{userId}", post.userId)
+                                .replace("{postId}", post.id.toString())
+                            navController.navigate(route)
+                        }
+                    )
                 }
                 is ProfileState.Error -> {
                     Column(

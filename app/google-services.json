@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "201801966068-6996rml39327qevarg7m4s5247rpga5f.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.company.InstagramClone",
+            "certificate_hash": "e51c5861347c368494cdac2fd043718b37013552"
+          }
+        },
+        {
           "client_id": "201801966068-vcpj7rv7ok6dik4qb02ch3gnfan2bfm5.apps.googleusercontent.com",
           "client_type": 3
         }

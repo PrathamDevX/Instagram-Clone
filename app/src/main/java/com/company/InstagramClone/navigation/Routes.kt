@@ -14,4 +14,5 @@ object Routes {
     const val FindYourAcc = "findYourAcc"
     const val Profile = "profile"
     const val CreateMedia = "createMedia"
+    const val PostDetail = "postDetail/{userId}/{postId}"
 }

@@ -34,6 +34,7 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.company.InstagramClone.R
 import com.company.InstagramClone.feature.home.Post
+import com.company.InstagramClone.utils.CloudinaryHelper
 import com.company.InstagramClone.ui.theme.InstagramBlack
 import com.company.InstagramClone.ui.theme.InstagramButtonSecondary
 import com.company.InstagramClone.ui.theme.InstagramSans
@@ -337,7 +338,10 @@ fun ProfileTabs() {
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun PostsGrid(posts: List<Post>) {
+fun PostsGrid(
+    posts: List<Post>,
+    onPostClick: (Post) -> Unit = {}
+) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(3),
         modifier = Modifier.fillMaxSize(),
@@ -349,14 +353,17 @@ fun PostsGrid(posts: List<Post>) {
                 modifier = Modifier
                     .aspectRatio(1f)
                     .background(androidx.compose.ui.graphics.Color.DarkGray)
+                    .clickable { onPostClick(post) }
             ) {
                 if (post.postImageUrl.isNotEmpty()) {
                     GlideImage(
-                        model = post.postImageUrl,
+                        model = CloudinaryHelper.getThumbnailUrl(post.postImageUrl),
                         contentDescription = null,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize()
-                    )
+                    ) {
+                        it.thumbnail(0.1f)
+                    }
                 }
             }
         }

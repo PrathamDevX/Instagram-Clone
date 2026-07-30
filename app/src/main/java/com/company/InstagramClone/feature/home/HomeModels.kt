@@ -13,6 +13,7 @@ data class Post(
     val username: String = "",
     val userImageUrl: String = "",
     val postImageUrl: String = "",
+    val mediaType: String = "image", // "image" or "video"
     val caption: String = "",
     val likesCount: Int = 0,
     val timeAgo: String = ""

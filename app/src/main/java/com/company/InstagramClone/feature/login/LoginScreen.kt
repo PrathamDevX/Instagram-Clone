@@ -105,16 +105,6 @@ fun LoginScreen(
                     Toast.makeText(context, "Please enter your email first", Toast.LENGTH_SHORT).show()
                 }
             }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            LoginWithOtpButton {
-                if (email.isNotEmpty()) {
-                    viewModel.generateAndSendOtp(email, VerificationType.Login)
-                } else {
-                    Toast.makeText(context, "Please enter your email first", Toast.LENGTH_SHORT).show()
-                }
-            }
         }
 
         Column(

@@ -17,6 +17,7 @@ import com.company.InstagramClone.feature.signup.EmailSignupScreen
 import com.company.InstagramClone.feature.signup.NameScreen
 import com.company.InstagramClone.feature.signup.UsernameScreen
 import com.company.InstagramClone.feature.profile.ProfileScreen
+import com.company.InstagramClone.feature.profile.PostDetailScreen
 import com.company.InstagramClone.feature.create.CreateMediaScreen
 
 import androidx.navigation.navArgument
@@ -103,6 +104,18 @@ fun App() {
 
         composable(Routes.CreateMedia) {
             CreateMediaScreen(navController)
+        }
+
+        composable(
+            route = Routes.PostDetail,
+            arguments = listOf(
+                navArgument("userId") { type = NavType.StringType },
+                navArgument("postId") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val userId = backStackEntry.arguments?.getString("userId") ?: ""
+            val postId = backStackEntry.arguments?.getString("postId") ?: ""
+            PostDetailScreen(userId, postId, navController)
         }
     }
 }

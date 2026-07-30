@@ -9,6 +9,7 @@ data class PostRecord(
     val profileImageUrl: String = "",
     val caption: String = "",
     val mediaUrls: List<String> = emptyList(),
+    val mediaType: String = "image",
     val likesCount: Int = 0,
     val commentsCount: Int = 0,
     val timestamp: Timestamp = Timestamp.now()
@@ -33,6 +34,7 @@ data class ReelRecord(
     val profileImageUrl: String = "",
     val videoUrl: String = "",
     val thumbnailUrl: String = "",
+    val mediaType: String = "video",
     val caption: String = "",
     val likesCount: Int = 0,
     val commentsCount: Int = 0,
