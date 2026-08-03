@@ -7,9 +7,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.material3.Text
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -25,10 +24,15 @@ import com.company.InstagramClone.ui.theme.InstagramBlack
 @Composable
 fun ProfileScreen(
     navController: NavController,
+    userId: String? = null, // Optional UID to view someone else
     viewModel: ProfileViewModel = viewModel()
 ) {
     val profileState by viewModel.profileState.collectAsState()
     val context = LocalContext.current
+
+    LaunchedEffect(userId) {
+        viewModel.fetchProfileData(userId)
+    }
 
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
@@ -52,6 +56,7 @@ fun ProfileScreen(
             )
         },
         bottomBar = {
+            val userProfile = (profileState as? ProfileState.Success)?.userProfile
             HomeBottomNavigation(
                 selectedRoute = Routes.Profile,
                 onHomeClick = {
@@ -60,8 +65,15 @@ fun ProfileScreen(
                     }
                 },
                 onProfileClick = {
-                    // Already on profile
-                }
+                    // Navigate to self if viewing someone else
+                    if (userId != null) {
+                        navController.navigate("profile")
+                    }
+                },
+                onReelsClick = {
+                    navController.navigate(Routes.Reels)
+                },
+                profileImageUrl = userProfile?.profileImageUrl ?: ""
             )
         },
         containerColor = InstagramBlack
@@ -80,38 +92,59 @@ fun ProfileScreen(
                 }
                 is ProfileState.Success -> {
                     val data = profileState as ProfileState.Success
-                    val profile = data.userProfile
-                    val currentUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+                    var selectedTabIndex by remember { mutableIntStateOf(0) }
                     
                     ProfileHeader(
-                        displayName = profile?.fullName ?: currentUser?.email?.substringBefore("@") ?: "Anonymous",
-                        username = profile?.username ?: currentUser?.email ?: "",
-                        profileImageUrl = profile?.profileImageUrl ?: "",
+                        userProfile = data.userProfile,
                         postCount = data.userPosts.size,
-                        followersCount = data.followersCount,
-                        followingCount = data.followingCount,
                         onImageClick = {
-                            imagePickerLauncher.launch(
-                                PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-                            )
+                            if (data.isCurrentUser) {
+                                imagePickerLauncher.launch(
+                                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                )
+                            }
                         }
                     )
                     
-                    ProfileActions()
+                    ProfileActions(
+                        isCurrentUser = data.isCurrentUser,
+                        isFollowing = data.isFollowing,
+                        onFollowClick = { viewModel.toggleFollow() }
+                    )
                     
                     HighlightsSection()
                     
-                    ProfileTabs()
-                    
-                    PostsGrid(
-                        posts = data.userPosts,
-                        onPostClick = { post ->
-                            val route = Routes.PostDetail
-                                .replace("{userId}", post.userId)
-                                .replace("{postId}", post.id.toString())
-                            navController.navigate(route)
-                        }
+                    ProfileTabs(
+                        selectedTabIndex = selectedTabIndex,
+                        onTabSelected = { selectedTabIndex = it }
                     )
+                    
+                    when (selectedTabIndex) {
+                        0 -> {
+                            PostsGrid(
+                                posts = data.userPosts,
+                                onPostClick = { post ->
+                                    val route = Routes.PostDetail
+                                        .replace("{userId}", post.userId)
+                                        .replace("{postId}", post.id.toString())
+                                    navController.navigate(route)
+                                }
+                            )
+                        }
+                        1 -> {
+                            ReelsGrid(
+                                reels = data.userReels,
+                                onReelClick = { reel ->
+                                    navController.navigate(Routes.Reels)
+                                }
+                            )
+                        }
+                        else -> {
+                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                Text("No tags yet", color = Color.White)
+                            }
+                        }
+                    }
                 }
                 is ProfileState.Error -> {
                     Column(
@@ -119,7 +152,7 @@ fun ProfileScreen(
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        androidx.compose.material3.Text(
+                        Text(
                             text = (profileState as ProfileState.Error).message,
                             color = Color.White,
                             modifier = Modifier.padding(16.dp),
@@ -127,12 +160,12 @@ fun ProfileScreen(
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         androidx.compose.material3.Button(
-                            onClick = { viewModel.fetchProfileData() },
+                            onClick = { viewModel.fetchProfileData(userId) },
                             colors = androidx.compose.material3.ButtonDefaults.buttonColors(
                                 containerColor = com.company.InstagramClone.ui.theme.InstagramLink
                             )
                         ) {
-                            androidx.compose.material3.Text("Retry")
+                            Text("Retry")
                         }
                     }
                 }

@@ -15,6 +15,7 @@ import com.company.InstagramClone.data.model.PostRecord
 import com.company.InstagramClone.data.model.ReelRecord
 import com.company.InstagramClone.data.model.StoryRecord
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.Timestamp
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -157,7 +158,8 @@ class CreateMediaViewModel(
                             username = profile?.username ?: "Anonymous",
                             profileImageUrl = profile?.profileImageUrl ?: "",
                             mediaUrl = url,
-                            mediaType = if (isVideo) "video" else "image"
+                            mediaType = if (isVideo) "video" else "image",
+                            expiresAt = Timestamp(Date(System.currentTimeMillis() + 24 * 60 * 60 * 1000))
                         ))
                     }
                     com.company.InstagramClone.feature.create.components.CreateMode.POST -> {

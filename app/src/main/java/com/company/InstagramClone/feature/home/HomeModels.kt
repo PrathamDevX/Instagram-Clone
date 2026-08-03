@@ -9,6 +9,7 @@ data class Story(
 
 data class Post(
     val id: Int = 0,
+    val postId: String = "",
     val userId: String = "",
     val username: String = "",
     val userImageUrl: String = "",
@@ -16,5 +17,6 @@ data class Post(
     val mediaType: String = "image", // "image" or "video"
     val caption: String = "",
     val likesCount: Int = 0,
+    val isLiked: Boolean = false,
     val timeAgo: String = ""
 )

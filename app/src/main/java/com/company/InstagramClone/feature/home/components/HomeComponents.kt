@@ -1,29 +1,29 @@
 package com.company.InstagramClone.feature.home.components
 
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.automirrored.outlined.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -33,17 +33,15 @@ import com.bumptech.glide.integration.compose.GlideImage
 import com.company.InstagramClone.R
 import com.company.InstagramClone.feature.home.Post
 import com.company.InstagramClone.feature.home.Story
+import com.company.InstagramClone.data.model.StoryRecord
 import com.company.InstagramClone.ui.components.VideoPlayer
 import com.company.InstagramClone.utils.CloudinaryHelper
 import com.company.InstagramClone.ui.theme.Billabong
 import com.company.InstagramClone.ui.theme.InstagramBlack
-import com.company.InstagramClone.ui.theme.InstagramHeadline
 import com.company.InstagramClone.ui.theme.InstagramSans
 
 @Composable
 fun HomeTopBar(onAddClick: () -> Unit = {}) {
-
-
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -79,7 +77,12 @@ fun HomeTopBar(onAddClick: () -> Unit = {}) {
 }
 
 @Composable
-fun StoriesSection(currentUsername: String = "Your story") {
+fun StoriesSection(
+    currentUsername: String = "Your story",
+    currentUserProfilePic: String = "",
+    stories: List<StoryRecord> = emptyList(),
+    onStoryClick: (StoryRecord) -> Unit = {}
+) {
     LazyRow(
         modifier = Modifier
             .fillMaxWidth()
@@ -88,17 +91,35 @@ fun StoriesSection(currentUsername: String = "Your story") {
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
-            StoryItem(Story(0, currentUsername, ""))
+            StoryItem(
+                story = Story(0, currentUsername, currentUserProfilePic),
+                isCurrent = true
+            )
         }
-        // Real stories from Firestore would go here in the future
+        
+        items(stories) { storyRecord ->
+            StoryItem(
+                storyRecord = storyRecord,
+                onClick = { onStoryClick(storyRecord) }
+            )
+        }
     }
 }
 
+@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun StoryItem(story: Story) {
+fun StoryItem(
+    story: Story? = null,
+    storyRecord: StoryRecord? = null,
+    isCurrent: Boolean = false,
+    onClick: () -> Unit = {}
+) {
+    val username = story?.username ?: storyRecord?.username ?: ""
+    val imageUrl = story?.imageUrl ?: storyRecord?.profileImageUrl ?: ""
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.width(80.dp)
+        modifier = Modifier.width(80.dp).clickable { onClick() }
     ) {
         Box(
             modifier = Modifier
@@ -114,7 +135,7 @@ fun StoryItem(story: Story) {
                 modifier = Modifier
                     .fillMaxSize()
                     .then(
-                        if (story.id != 0) {
+                        if (!isCurrent) {
                             Modifier.border(2.dp, storyGradient, CircleShape)
                         } else {
                             Modifier
@@ -124,10 +145,17 @@ fun StoryItem(story: Story) {
                     .clip(CircleShape)
                     .background(Color.Gray)
             ) {
-                // Placeholder for profile image
+                if (imageUrl.isNotEmpty()) {
+                    GlideImage(
+                        model = imageUrl,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
             }
 
-            if (story.id == 0) {
+            if (isCurrent) {
                 Box(
                     modifier = Modifier
                         .size(20.dp)
@@ -149,7 +177,7 @@ fun StoryItem(story: Story) {
         }
         Spacer(modifier = Modifier.height(4.dp))
         Text(
-            text = story.username,
+            text = username,
             color = Color.White,
             fontSize = 12.sp,
             maxLines = 1,
@@ -161,7 +189,13 @@ fun StoryItem(story: Story) {
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-fun PostItem(post: Post) {
+fun PostItem(
+    post: Post,
+    shouldPlay: Boolean = true,
+    onLikeClick: () -> Unit = {},
+    onCommentClick: () -> Unit = {},
+    onUserClick: (String) -> Unit = {}
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -175,12 +209,15 @@ fun PostItem(post: Post) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.clickable { onUserClick(post.userId) }
+            ) {
                 Box(
                     modifier = Modifier
                         .size(32.dp)
                         .clip(CircleShape)
-                        .background(androidx.compose.ui.graphics.Color.Gray)
+                        .background(Color.Gray)
                 ) {
                     if (post.userImageUrl.isNotEmpty()) {
                         GlideImage(
@@ -194,7 +231,7 @@ fun PostItem(post: Post) {
                 Spacer(modifier = Modifier.width(10.dp))
                 Text(
                     text = post.username,
-                    color = androidx.compose.ui.graphics.Color.White,
+                    color = Color.White,
                     fontWeight = FontWeight.Bold,
                     fontSize = 13.sp,
                     fontFamily = InstagramSans
@@ -203,28 +240,31 @@ fun PostItem(post: Post) {
             Icon(
                 imageVector = Icons.Default.MoreVert,
                 contentDescription = "More",
-                tint = androidx.compose.ui.graphics.Color.White,
+                tint = Color.White,
                 modifier = Modifier.size(20.dp)
             )
         }
 
-        // Post Media Area (Responsive Aspect Ratio)
+        // Post Media Area
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .wrapContentHeight()
-                .background(androidx.compose.ui.graphics.Color.Black)
+                .background(Color.Black)
+                .pointerInput(Unit) {
+                    detectTapGestures(onDoubleTap = { onLikeClick() })
+                }
         ) {
             if (post.postImageUrl.isNotEmpty()) {
                 val inferredType = CloudinaryHelper.getMediaType(post.postImageUrl, post.mediaType)
-                android.util.Log.d("PostItem", "Rendering post [${post.id}]: type=$inferredType, url=${post.postImageUrl}")
                 
                 if (inferredType == "video") {
                     VideoPlayer(
                         videoUrl = CloudinaryHelper.getOptimizedVideoUrl(post.postImageUrl),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .aspectRatio(0.8f) // Standard portrait video ratio
+                            .aspectRatio(0.8f),
+                        shouldPlay = shouldPlay
                     )
                 } else {
                     GlideImage(
@@ -233,7 +273,7 @@ fun PostItem(post: Post) {
                         contentScale = ContentScale.Crop,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .aspectRatio(1f) // Standard square post ratio
+                            .aspectRatio(1f)
                     ) {
                         it.thumbnail(0.1f)
                     }
@@ -250,15 +290,15 @@ fun PostItem(post: Post) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = {}) {
+                IconButton(onClick = onLikeClick) {
                     Icon(
-                        imageVector = Icons.Outlined.FavoriteBorder,
+                        imageVector = if (post.isLiked) Icons.Filled.Favorite else Icons.Default.FavoriteBorder,
                         contentDescription = "Like",
-                        tint = Color.White,
+                        tint = if (post.isLiked) Color.Red else Color.White,
                         modifier = Modifier.size(26.dp)
                     )
                 }
-                IconButton(onClick = {}) {
+                IconButton(onClick = onCommentClick) {
                     Icon(
                         painter = painterResource(id = R.drawable.chat),
                         contentDescription = "Comment",
@@ -322,6 +362,7 @@ fun PostItem(post: Post) {
     }
 }
 
+@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun HomeBottomNavigation(
     selectedRoute: String = com.company.InstagramClone.navigation.Routes.Home,
@@ -329,7 +370,8 @@ fun HomeBottomNavigation(
     onSearchClick: () -> Unit = {},
     onAddClick: () -> Unit = {},
     onReelsClick: () -> Unit = {},
-    onProfileClick: () -> Unit = {}
+    onProfileClick: () -> Unit = {},
+    profileImageUrl: String = ""
 ) {
     NavigationBar(
         modifier = Modifier.height(60.dp),
@@ -365,10 +407,11 @@ fun HomeBottomNavigation(
             )
         )
         NavigationBarItem(
-            selected = false,
+            selected = selectedRoute == com.company.InstagramClone.navigation.Routes.Reels,
             onClick = onReelsClick,
             icon = { Icon(painter = painterResource(id = R.drawable.play), contentDescription = "Reels", modifier = Modifier.size(25.dp)) },
             colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = Color.White,
                 unselectedIconColor = Color.White,
                 indicatorColor = Color.Transparent
             )
@@ -391,7 +434,16 @@ fun HomeBottomNavigation(
                         .padding(2.dp)
                         .clip(CircleShape)
                         .background(Color.Gray)
-                )
+                ) {
+                    if (profileImageUrl.isNotEmpty()) {
+                        GlideImage(
+                            model = profileImageUrl,
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                }
             },
             colors = NavigationBarItemDefaults.colors(
                 unselectedIconColor = Color.White,

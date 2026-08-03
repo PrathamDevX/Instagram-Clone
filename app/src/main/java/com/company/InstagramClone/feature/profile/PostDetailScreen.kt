@@ -3,13 +3,10 @@ package com.company.InstagramClone.feature.profile
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -18,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.company.InstagramClone.navigation.Routes
 import com.company.InstagramClone.feature.home.components.PostItem
 import com.company.InstagramClone.ui.components.InstagramBackButton
 import com.company.InstagramClone.ui.theme.InstagramBlack
@@ -82,6 +80,22 @@ fun PostDetailScreen(
             }
             is ProfileState.Success -> {
                 val posts = (profileState as ProfileState.Success).userPosts
+                
+                val currentlyPlayingIndex by remember {
+                    derivedStateOf {
+                        val layoutInfo = listState.layoutInfo
+                        val visibleItems = layoutInfo.visibleItemsInfo
+                        if (visibleItems.isEmpty()) return@derivedStateOf -1
+
+                        val viewPortCenter = (layoutInfo.viewportStartOffset + layoutInfo.viewportEndOffset) / 2
+                        
+                        visibleItems.minByOrNull { item ->
+                            val itemCenter = item.offset + (item.size / 2)
+                            kotlin.math.abs(itemCenter - viewPortCenter)
+                        }?.index ?: -1
+                    }
+                }
+
                 LazyColumn(
                     state = listState,
                     modifier = Modifier
@@ -89,8 +103,16 @@ fun PostDetailScreen(
                         .padding(paddingValues)
                         .background(InstagramBlack)
                 ) {
-                    items(posts) { post ->
-                        PostItem(post)
+                    itemsIndexed(posts) { index, post ->
+                        PostItem(
+                            post = post,
+                            shouldPlay = currentlyPlayingIndex == index,
+                            onUserClick = { userId ->
+                                if (userId != (profileState as? ProfileState.Success)?.userProfile?.uid) {
+                                    navController.navigate(Routes.Profile.replace("{userId}", userId))
+                                }
+                            }
+                        )
                     }
                 }
             }

@@ -19,6 +19,8 @@ import com.company.InstagramClone.feature.signup.UsernameScreen
 import com.company.InstagramClone.feature.profile.ProfileScreen
 import com.company.InstagramClone.feature.profile.PostDetailScreen
 import com.company.InstagramClone.feature.create.CreateMediaScreen
+import com.company.InstagramClone.feature.reels.ReelsScreen
+import com.company.InstagramClone.feature.story.StoryViewerScreen
 
 import androidx.navigation.navArgument
 import androidx.navigation.NavType
@@ -98,8 +100,24 @@ fun App() {
             FindYourAccScreen(navController)
         }
 
-        composable(Routes.Profile) {
-            ProfileScreen(navController)
+        composable(
+            route = Routes.Profile,
+            arguments = listOf(navArgument("userId") { defaultValue = ""; type = NavType.StringType; nullable = true })
+        ) { backStackEntry ->
+            val userId = backStackEntry.arguments?.getString("userId")
+            ProfileScreen(navController, userId)
+        }
+
+        composable(Routes.Reels) {
+            ReelsScreen(navController)
+        }
+
+        composable(
+            route = Routes.StoryViewer,
+            arguments = listOf(navArgument("userId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val userId = backStackEntry.arguments?.getString("userId") ?: ""
+            StoryViewerScreen(userId, navController)
         }
 
         composable(Routes.CreateMedia) {

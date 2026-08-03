@@ -4,19 +4,26 @@ import android.net.Uri
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.annotation.OptIn
+import androidx.compose.animation.*
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.Icon
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
@@ -26,6 +33,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.PlayerView
 import com.company.InstagramClone.utils.VideoCache
+import kotlinx.coroutines.delay
 
 @OptIn(UnstableApi::class)
 @Composable
@@ -33,10 +41,41 @@ fun VideoPlayer(
     videoUrl: String,
     modifier: Modifier = Modifier,
     isMuted: Boolean = false,
-    autoPlay: Boolean = true
+    autoPlay: Boolean = true,
+    shouldPlay: Boolean = true
 ) {
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    var isManualPaused by remember { mutableStateOf(false) }
+    var isAppInBackground by remember { mutableStateOf(false) }
+    var showOverlayIcon by remember { mutableStateOf<ImageVector?>(null) }
     
+    // Lifecycle observer to handle background/foreground transitions
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_PAUSE, Lifecycle.Event.ON_STOP -> {
+                    isAppInBackground = true
+                }
+                Lifecycle.Event.ON_RESUME -> {
+                    isAppInBackground = false
+                }
+                else -> {}
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
+    // Reset manual pause when the video is scrolled away
+    LaunchedEffect(shouldPlay) {
+        if (!shouldPlay) {
+            isManualPaused = false
+        }
+    }
+
     // Custom LoadControl for smoother buffering and reduced "wavy" quality
     val loadControl = remember {
         DefaultLoadControl.Builder()
@@ -56,7 +95,7 @@ fun VideoPlayer(
             .build().apply {
                 videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING
                 repeatMode = Player.REPEAT_MODE_ALL
-                playWhenReady = autoPlay
+                playWhenReady = autoPlay && shouldPlay && !isManualPaused && !isAppInBackground
                 
                 addListener(object : Player.Listener {
                     override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
@@ -77,6 +116,10 @@ fun VideoPlayer(
             }
     }
 
+    LaunchedEffect(shouldPlay, isManualPaused, isAppInBackground) {
+        exoPlayer.playWhenReady = shouldPlay && !isManualPaused && !isAppInBackground
+    }
+
     var isPlayerMuted by remember { mutableStateOf(isMuted) }
 
     LaunchedEffect(videoUrl) {
@@ -95,7 +138,13 @@ fun VideoPlayer(
         }
     }
 
-    Box(modifier = modifier.clickable { isPlayerMuted = !isPlayerMuted }) {
+    Box(
+        modifier = modifier.clickable {
+            isManualPaused = !isManualPaused
+            showOverlayIcon = if (isManualPaused) Icons.Default.Pause else Icons.Default.PlayArrow
+        },
+        contentAlignment = Alignment.Center
+    ) {
         AndroidView(
             factory = {
                 PlayerView(context).apply {
@@ -110,5 +159,33 @@ fun VideoPlayer(
             },
             modifier = Modifier.fillMaxSize()
         )
+
+        // Play/Pause Overlay Icon
+        AnimatedVisibility(
+            visible = showOverlayIcon != null,
+            enter = fadeIn() + scaleIn(),
+            exit = fadeOut() + scaleOut()
+        ) {
+            showOverlayIcon?.let { icon ->
+                Box(
+                    modifier = Modifier
+                        .size(60.dp)
+                        .background(Color.Black.copy(alpha = 0.4f), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(35.dp)
+                    )
+                }
+                
+                LaunchedEffect(showOverlayIcon) {
+                    delay(800)
+                    showOverlayIcon = null
+                }
+            }
+        }
     }
 }

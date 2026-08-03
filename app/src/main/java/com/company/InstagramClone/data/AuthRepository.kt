@@ -95,6 +95,8 @@ class FirebaseAuthRepository(
         return try {
             android.util.Log.d("AUTH_REPO", "Fetching all posts from Firestore...")
             val snapshot = firestore.collection("posts").get().await()
+            val currentUid = auth.currentUser?.uid
+            
             val posts = snapshot.documents.mapNotNull { doc ->
                 try {
                     val data = doc.data
@@ -109,6 +111,7 @@ class FirebaseAuthRepository(
                     
                     com.company.InstagramClone.feature.home.Post(
                         id = doc.id.hashCode(),
+                        postId = doc.id,
                         userId = doc.getString("userId") ?: "",
                         username = doc.getString("username") ?: "Anonymous",
                         userImageUrl = doc.getString("profileImageUrl") ?: "",
@@ -116,6 +119,7 @@ class FirebaseAuthRepository(
                         mediaType = mediaType,
                         caption = doc.getString("caption") ?: "",
                         likesCount = doc.getLong("likesCount")?.toInt() ?: 0,
+                        isLiked = false, // We'll update this in a separate pass or just fetch likes separately
                         timeAgo = "Just now"
                     )
                 } catch (e: Exception) {
@@ -123,8 +127,20 @@ class FirebaseAuthRepository(
                     null
                 }
             }
-            android.util.Log.d("AUTH_REPO", "Posts fetch success. Count: ${posts.size}")
-            Result.success(posts)
+            
+            // Second pass to check likes if logged in
+            val finalPosts = if (currentUid != null) {
+                posts.map { post ->
+                    val isLiked = firestore.collection("posts").document(post.postId)
+                        .collection("likes").document(currentUid).get().await().exists()
+                    post.copy(isLiked = isLiked)
+                }
+            } else {
+                posts
+            }
+            
+            android.util.Log.d("AUTH_REPO", "Posts fetch success. Count: ${finalPosts.size}")
+            Result.success(finalPosts)
         } catch (e: Exception) {
             android.util.Log.e("AUTH_REPO", "Posts fetch failed: ${e.message}", e)
             Result.failure(e)

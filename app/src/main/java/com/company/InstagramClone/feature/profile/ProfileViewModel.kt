@@ -7,25 +7,32 @@ import com.company.InstagramClone.data.AuthRepository
 import com.company.InstagramClone.data.FirebaseAuthRepository
 import com.company.InstagramClone.data.MediaRepository
 import com.company.InstagramClone.data.UserProfile
+import com.company.InstagramClone.data.SocialRepository
+import com.company.InstagramClone.data.model.ReelRecord
 import com.company.InstagramClone.feature.home.Post
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 sealed class ProfileState {
     object Loading : ProfileState()
     data class Success(
         val userProfile: UserProfile?,
         val userPosts: List<Post> = emptyList(),
-        val followersCount: Int = 88,
-        val followingCount: Int = 100
+        val userReels: List<ReelRecord> = emptyList(),
+        val isFollowing: Boolean = false,
+        val isCurrentUser: Boolean = true
     ) : ProfileState()
     data class Error(val message: String) : ProfileState()
 }
 
 class ProfileViewModel(
     private val repository: AuthRepository = FirebaseAuthRepository(),
-    private val mediaRepository: MediaRepository = MediaRepository()
+    private val mediaRepository: MediaRepository = MediaRepository(),
+    private val socialRepository: SocialRepository = SocialRepository()
 ) : ViewModel() {
     private val _profileState = MutableStateFlow<ProfileState>(ProfileState.Loading)
     val profileState = _profileState.asStateFlow()
@@ -34,41 +41,67 @@ class ProfileViewModel(
         fetchProfileData()
     }
 
-    fun fetchProfileData() {
+    fun fetchProfileData(targetUserId: String? = null) {
         viewModelScope.launch {
             _profileState.value = ProfileState.Loading
-            android.util.Log.d("PROFILE_VM", "Fetching profile data...")
+            android.util.Log.d("PROFILE_VM", "Fetching profile data for: $targetUserId")
             
-            val currentUid = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
-            val profileResult = repository.getUserProfile()
-            val postsResult = repository.getPosts()
+            val currentUid = FirebaseAuth.getInstance().currentUser?.uid
+            val filterUid = targetUserId ?: currentUid
+            
+            if (filterUid == null) {
+                _profileState.value = ProfileState.Error("User not identified")
+                return@launch
+            }
 
-            if (profileResult.isSuccess) {
-                val profile = profileResult.getOrNull()
+            try {
+                // Fetch profile
+                val doc = FirebaseFirestore.getInstance()
+                    .collection("users").document(filterUid).get().await()
+                val profile = doc.toObject(UserProfile::class.java)
+
+                // Fetch posts
+                val postsResult = repository.getPosts()
                 val allPosts = postsResult.getOrDefault(emptyList())
+                val userPosts = allPosts.filter { it.userId == filterUid }
                 
-                // Prioritize currentUid for filtering
-                val filterUid = profile?.uid ?: currentUid
-                val userPosts = if (filterUid != null) {
-                    allPosts.filter { it.userId == filterUid }
+                // Fetch reels
+                val reelsResult = socialRepository.getUserReels(filterUid)
+                
+                // Check following status
+                val isFollowing = if (currentUid != null && targetUserId != null && targetUserId != currentUid) {
+                    socialRepository.checkIfFollowing(currentUid, targetUserId).getOrDefault(false)
                 } else {
-                    emptyList()
+                    false
                 }
 
-                android.util.Log.d("PROFILE_VM", "Profile data fetch success. User posts found: ${userPosts.size}")
                 _profileState.value = ProfileState.Success(
                     userProfile = profile,
-                    userPosts = userPosts
+                    userPosts = userPosts,
+                    userReels = reelsResult.getOrDefault(emptyList()),
+                    isFollowing = isFollowing,
+                    isCurrentUser = targetUserId == null || targetUserId == currentUid
                 )
-            } else {
-                val errorMsg = profileResult.exceptionOrNull()?.message ?: "Failed to load profile"
-                val errorMsgFull = if (errorMsg.contains("offline", ignoreCase = true)) {
-                    "The app is offline. Please check your internet connection and ensure Firestore is enabled in the Firebase Console."
+            } catch (e: Exception) {
+                android.util.Log.e("PROFILE_VM", "Fetch failed: ${e.message}")
+                _profileState.value = ProfileState.Error(e.message ?: "Failed to load profile")
+            }
+        }
+    }
+
+    fun toggleFollow() {
+        val currentState = _profileState.value
+        if (currentState is ProfileState.Success) {
+            val currentUid = FirebaseAuth.getInstance().currentUser?.uid ?: return
+            val targetUid = currentState.userProfile?.uid ?: return
+            
+            viewModelScope.launch {
+                if (currentState.isFollowing) {
+                    socialRepository.unfollowUser(currentUid, targetUid)
                 } else {
-                    errorMsg
+                    socialRepository.followUser(currentUid, targetUid)
                 }
-                android.util.Log.e("PROFILE_VM", "Profile data fetch failed: $errorMsgFull")
-                _profileState.value = ProfileState.Error(errorMsgFull)
+                fetchProfileData(targetUid)
             }
         }
     }

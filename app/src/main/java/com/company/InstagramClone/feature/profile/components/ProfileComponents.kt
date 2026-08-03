@@ -13,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.outlined.AlternateEmail
 import androidx.compose.material.icons.outlined.AssignmentInd
 import androidx.compose.material.icons.outlined.GridView
@@ -34,6 +35,8 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.company.InstagramClone.R
 import com.company.InstagramClone.feature.home.Post
+import com.company.InstagramClone.data.UserProfile
+import com.company.InstagramClone.data.model.ReelRecord
 import com.company.InstagramClone.utils.CloudinaryHelper
 import com.company.InstagramClone.ui.theme.InstagramBlack
 import com.company.InstagramClone.ui.theme.InstagramButtonSecondary
@@ -97,14 +100,16 @@ fun ProfileTopBar(
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun ProfileHeader(
-    displayName: String,
-    username: String,
-    profileImageUrl: String,
+    userProfile: UserProfile?,
     postCount: Int,
-    followersCount: Int,
-    followingCount: Int,
     onImageClick: () -> Unit = {}
 ) {
+    val displayName = userProfile?.fullName ?: ""
+    val username = userProfile?.username ?: ""
+    val profileImageUrl = userProfile?.profileImageUrl ?: ""
+    val followersCount = userProfile?.followersCount ?: 0
+    val followingCount = userProfile?.followingCount ?: 0
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -115,7 +120,7 @@ fun ProfileHeader(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            // Profile Image with "Add" button
+            // Profile Image
             Box(
                 contentAlignment = Alignment.BottomEnd,
                 modifier = Modifier.clickable { onImageClick() }
@@ -124,7 +129,7 @@ fun ProfileHeader(
                     modifier = Modifier
                         .size(85.dp)
                         .clip(CircleShape)
-                        .background(androidx.compose.ui.graphics.Color.Gray)
+                        .background(Color.Gray)
                 ) {
                     if (profileImageUrl.isNotEmpty()) {
                         GlideImage(
@@ -163,7 +168,6 @@ fun ProfileHeader(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Display Name
         Text(
             text = displayName.ifEmpty { "Anonymous" },
             color = Color.White,
@@ -174,7 +178,6 @@ fun ProfileHeader(
 
         Spacer(modifier = Modifier.height(4.dp))
 
-        // Username handle with "@"
         Row(
             modifier = Modifier
                 .clip(RoundedCornerShape(12.dp))
@@ -226,15 +229,44 @@ fun StatItem(label: String, count: Int) {
 }
 
 @Composable
-fun ProfileActions() {
+fun ProfileActions(
+    isCurrentUser: Boolean = true,
+    isFollowing: Boolean = false,
+    onFollowClick: () -> Unit = {}
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        ProfileButton(text = "Edit profile", modifier = Modifier.weight(1f))
-        ProfileButton(text = "Share profile", modifier = Modifier.weight(1f))
+        if (isCurrentUser) {
+            ProfileButton(text = "Edit profile", modifier = Modifier.weight(1f))
+            ProfileButton(text = "Share profile", modifier = Modifier.weight(1f))
+        } else {
+            ProfileButton(
+                text = if (isFollowing) "Following" else "Follow",
+                modifier = Modifier.weight(1f),
+                onClick = onFollowClick,
+                isPrimary = !isFollowing,
+                trailingIcon = if (isFollowing) Icons.Default.KeyboardArrowDown else null
+            )
+            ProfileButton(text = "Message", modifier = Modifier.weight(1f))
+            IconButton(
+                onClick = { },
+                modifier = Modifier
+                    .size(35.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(InstagramButtonSecondary)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.PersonAdd,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
         IconButton(
             onClick = { },
             modifier = Modifier
@@ -253,18 +285,30 @@ fun ProfileActions() {
 }
 
 @Composable
-fun ProfileButton(text: String, modifier: Modifier = Modifier) {
+fun ProfileButton(
+    text: String,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit = {},
+    isPrimary: Boolean = false,
+    trailingIcon: androidx.compose.ui.graphics.vector.ImageVector? = null
+) {
     Button(
-        onClick = { },
+        onClick = onClick,
         colors = ButtonDefaults.buttonColors(
-            containerColor = InstagramButtonSecondary,
+            containerColor = if (isPrimary) Color(0xFF0095F6) else InstagramButtonSecondary,
             contentColor = Color.White
         ),
         shape = RoundedCornerShape(8.dp),
         modifier = modifier.height(35.dp),
         contentPadding = PaddingValues(horizontal = 8.dp)
     ) {
-        Text(text = text, fontSize = 14.sp, fontWeight = FontWeight.Bold, fontFamily = InstagramSans)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(text = text, fontSize = 14.sp, fontWeight = FontWeight.Bold, fontFamily = InstagramSans)
+            if (trailingIcon != null) {
+                Spacer(modifier = Modifier.width(4.dp))
+                Icon(imageVector = trailingIcon, contentDescription = null, modifier = Modifier.size(16.dp))
+            }
+        }
     }
 }
 
@@ -299,39 +343,83 @@ fun HighlightsSection() {
 }
 
 @Composable
-fun ProfileTabs() {
+fun ProfileTabs(
+    selectedTabIndex: Int,
+    onTabSelected: (Int) -> Unit
+) {
     TabRow(
-        selectedTabIndex = 0,
+        selectedTabIndex = selectedTabIndex,
         containerColor = InstagramBlack,
         contentColor = Color.White,
         divider = {},
         indicator = { tabPositions ->
             TabRowDefaults.SecondaryIndicator(
-                Modifier.tabIndicatorOffset(tabPositions[0]),
+                Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex]),
                 color = Color.White
             )
         }
     ) {
-        Tab(selected = true, onClick = { }) {
+        Tab(selected = selectedTabIndex == 0, onClick = { onTabSelected(0) }) {
             Icon(
                 imageVector = Icons.Outlined.GridView,
                 contentDescription = null,
                 modifier = Modifier.size(28.dp).padding(vertical = 2.dp)
             )
         }
-        Tab(selected = false, onClick = { }) {
+        Tab(selected = selectedTabIndex == 1, onClick = { onTabSelected(1) }) {
             Icon(
                 painter = painterResource(id = R.drawable.play),
                 contentDescription = null,
                 modifier = Modifier.size(28.dp).padding(vertical = 2.dp)
             )
         }
-        Tab(selected = false, onClick = { }) {
+        Tab(selected = selectedTabIndex == 2, onClick = { onTabSelected(2) }) {
             Icon(
                 imageVector = Icons.Outlined.AssignmentInd,
                 contentDescription = null,
                 modifier = Modifier.size(28.dp).padding(vertical = 2.dp)
             )
+        }
+    }
+}
+
+@OptIn(ExperimentalGlideComposeApi::class)
+@Composable
+fun ReelsGrid(
+    reels: List<ReelRecord>,
+    onReelClick: (ReelRecord) -> Unit = {}
+) {
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(3),
+        modifier = Modifier.fillMaxSize(),
+        horizontalArrangement = Arrangement.spacedBy(1.dp),
+        verticalArrangement = Arrangement.spacedBy(1.dp)
+    ) {
+        items(reels) { reel ->
+            Box(
+                modifier = Modifier
+                    .aspectRatio(0.6f)
+                    .background(Color.DarkGray)
+                    .clickable { onReelClick(reel) }
+            ) {
+                if (reel.videoUrl.isNotEmpty()) {
+                    GlideImage(
+                        model = CloudinaryHelper.getThumbnailUrl(reel.videoUrl),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        it.thumbnail(0.1f)
+                    }
+                }
+                
+                Icon(
+                    painter = painterResource(id = R.drawable.play),
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.align(Alignment.TopEnd).padding(4.dp).size(16.dp)
+                )
+            }
         }
     }
 }
@@ -352,7 +440,7 @@ fun PostsGrid(
             Box(
                 modifier = Modifier
                     .aspectRatio(1f)
-                    .background(androidx.compose.ui.graphics.Color.DarkGray)
+                    .background(Color.DarkGray)
                     .clickable { onPostClick(post) }
             ) {
                 if (post.postImageUrl.isNotEmpty()) {
@@ -365,18 +453,6 @@ fun PostsGrid(
                         it.thumbnail(0.1f)
                     }
                 }
-            }
-        }
-        
-        // Fill with placeholders if no posts
-        if (posts.isEmpty()) {
-            items(9) {
-                Box(
-                    modifier = Modifier
-                        .aspectRatio(1f)
-                        .background(Color.DarkGray)
-                        .border(0.5.dp, InstagramBlack)
-                )
             }
         }
     }

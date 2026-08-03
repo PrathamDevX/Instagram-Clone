@@ -12,7 +12,9 @@ object Routes {
     const val Password = "password?email={email}"
     const val BirthdayInput = "birthdayInput"
     const val FindYourAcc = "findYourAcc"
-    const val Profile = "profile"
+    const val Profile = "profile?userId={userId}"
     const val CreateMedia = "createMedia"
+    const val Reels = "reels"
     const val PostDetail = "postDetail/{userId}/{postId}"
+    const val StoryViewer = "storyViewer/{userId}"
 }

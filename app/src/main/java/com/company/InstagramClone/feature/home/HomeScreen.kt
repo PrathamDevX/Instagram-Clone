@@ -3,7 +3,8 @@ package com.company.InstagramClone.feature.home
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,6 +24,7 @@ import com.company.InstagramClone.ui.theme.InstagramBorder
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.company.InstagramClone.ui.components.CommentBottomSheet
 import com.company.InstagramClone.navigation.Routes
 
 @Composable
@@ -31,8 +33,11 @@ fun Home(
     homeViewModel: HomeViewModel = viewModel()
 ) {
     val homeState by homeViewModel.homeState.collectAsState()
+    val comments by homeViewModel.activeComments.collectAsState()
+    var showCommentsForPostId by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
+        // ... existing scaffold content ...
         topBar = {
             HomeTopBar(
                 onAddClick = {
@@ -41,6 +46,7 @@ fun Home(
             )
         },
         bottomBar = {
+            val userProfile = (homeState as? HomeState.Success)?.userProfile
             HomeBottomNavigation(
                 selectedRoute = Routes.Home,
                 onHomeClick = {
@@ -48,7 +54,11 @@ fun Home(
                 },
                 onProfileClick = {
                     navController.navigate(Routes.Profile)
-                }
+                },
+                onReelsClick = {
+                    navController.navigate(Routes.Reels)
+                },
+                profileImageUrl = userProfile?.profileImageUrl ?: ""
             )
         },
         containerColor = InstagramBlack
@@ -93,27 +103,77 @@ fun Home(
                 val data = homeState as HomeState.Success
                 val userProfile = data.userProfile
                 val posts = data.posts
+                val stories = data.stories
                 
+                val listState = rememberLazyListState()
+                
+                val currentlyPlayingIndex by remember {
+                    derivedStateOf {
+                        val layoutInfo = listState.layoutInfo
+                        val visibleItems = layoutInfo.visibleItemsInfo
+                        if (visibleItems.isEmpty()) return@derivedStateOf -1
+
+                        val viewPortCenter = (layoutInfo.viewportStartOffset + layoutInfo.viewportEndOffset) / 2
+                        
+                        visibleItems
+                            .filter { it.index >= 2 }
+                            .minByOrNull { item ->
+                                val itemCenter = item.offset + (item.size / 2)
+                                kotlin.math.abs(itemCenter - viewPortCenter)
+                            }?.index ?: -1
+                    }
+                }
+
                 LazyColumn(
+                    state = listState,
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues)
                         .background(InstagramBlack)
                 ) {
                     item {
-                        StoriesSection(userProfile?.username ?: "Your story")
+                        StoriesSection(
+                            currentUsername = userProfile?.username ?: "Your story",
+                            currentUserProfilePic = userProfile?.profileImageUrl ?: "",
+                            stories = stories,
+                            onStoryClick = { story ->
+                                navController.navigate(Routes.StoryViewer.replace("{userId}", story.userId))
+                            }
+                        )
                     }
                     
                     item {
                         HorizontalDivider(color = InstagramBorder, thickness = 0.5.dp)
                     }
 
-                    items(posts) { post ->
-                        PostItem(post)
+                    itemsIndexed(posts) { index, post ->
+                        val postListIndex = index + 2 
+                        PostItem(
+                            post = post,
+                            shouldPlay = currentlyPlayingIndex == postListIndex,
+                            onLikeClick = { homeViewModel.toggleLike(post.postId) },
+                            onCommentClick = {
+                                homeViewModel.fetchComments(post.postId)
+                                showCommentsForPostId = post.postId
+                            },
+                            onUserClick = { userId ->
+                                navController.navigate(Routes.Profile.replace("{userId}", userId))
+                            }
+                        )
                         Spacer(modifier = Modifier.height(12.dp))
                     }
                 }
             }
+        }
+
+        if (showCommentsForPostId != null) {
+            CommentBottomSheet(
+                comments = comments,
+                onAddComment = { text ->
+                    showCommentsForPostId?.let { homeViewModel.addComment(it, text) }
+                },
+                onDismiss = { showCommentsForPostId = null }
+            )
         }
     }
 }
