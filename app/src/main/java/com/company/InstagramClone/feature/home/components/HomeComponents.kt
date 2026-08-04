@@ -90,14 +90,17 @@ fun StoriesSection(
         contentPadding = PaddingValues(horizontal = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        item {
+        item(key = "your_story") {
             StoryItem(
                 story = Story(0, currentUsername, currentUserProfilePic),
                 isCurrent = true
             )
         }
         
-        items(stories) { storyRecord ->
+        items(
+            items = stories,
+            key = { it.storyId }
+        ) { storyRecord ->
             StoryItem(
                 storyRecord = storyRecord,
                 onClick = { onStoryClick(storyRecord) }

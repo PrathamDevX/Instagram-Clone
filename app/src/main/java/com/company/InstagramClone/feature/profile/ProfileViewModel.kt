@@ -12,10 +12,12 @@ import com.company.InstagramClone.data.model.ReelRecord
 import com.company.InstagramClone.feature.home.Post
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 
 sealed class ProfileState {
     object Loading : ProfileState()
@@ -55,24 +57,26 @@ class ProfileViewModel(
             }
 
             try {
-                // Fetch profile
+                // Fetch data in parallel or sequence
                 val doc = FirebaseFirestore.getInstance()
                     .collection("users").document(filterUid).get().await()
                 val profile = doc.toObject(UserProfile::class.java)
 
-                // Fetch posts
                 val postsResult = repository.getPosts()
-                val allPosts = postsResult.getOrDefault(emptyList())
-                val userPosts = allPosts.filter { it.userId == filterUid }
-                
-                // Fetch reels
                 val reelsResult = socialRepository.getUserReels(filterUid)
                 
-                // Check following status
-                val isFollowing = if (currentUid != null && targetUserId != null && targetUserId != currentUid) {
-                    socialRepository.checkIfFollowing(currentUid, targetUserId).getOrDefault(false)
-                } else {
-                    false
+                // Process results off-thread
+                val (userPosts, isFollowing) = withContext(Dispatchers.Default) {
+                    val allPosts = postsResult.getOrDefault(emptyList())
+                    val filteredPosts = allPosts.filter { it.userId == filterUid }
+                    
+                    val followingStatus = if (currentUid != null && targetUserId != null && targetUserId != currentUid) {
+                        socialRepository.checkIfFollowing(currentUid, targetUserId).getOrDefault(false)
+                    } else {
+                        false
+                    }
+                    
+                    Pair(filteredPosts, followingStatus)
                 }
 
                 _profileState.value = ProfileState.Success(

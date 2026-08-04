@@ -9,6 +9,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -27,7 +28,7 @@ fun ProfileScreen(
     userId: String? = null, // Optional UID to view someone else
     viewModel: ProfileViewModel = viewModel()
 ) {
-    val profileState by viewModel.profileState.collectAsState()
+    val profileState by viewModel.profileState.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
     LaunchedEffect(userId) {

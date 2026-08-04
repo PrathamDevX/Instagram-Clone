@@ -15,7 +15,7 @@ object VideoCache {
     private var simpleCache: SimpleCache? = null
     private val lock = Any()
 
-    fun getInstance(context: Context): SimpleCache {
+    fun getInstance(context: Context): SimpleCache? {
         synchronized(lock) {
             if (simpleCache == null) {
                 try {
@@ -29,16 +29,19 @@ object VideoCache {
                     android.util.Log.d("VideoCache", "Cache initialized at ${cacheDir.absolutePath}")
                 } catch (e: Exception) {
                     android.util.Log.e("VideoCache", "Failed to initialize cache: ${e.message}")
+                    return null
                 }
             }
-            return simpleCache!!
+            return simpleCache
         }
     }
 
-    fun getCacheDataSourceFactory(context: Context): CacheDataSource.Factory {
+    fun getCacheDataSourceFactory(context: Context): androidx.media3.datasource.DataSource.Factory {
         val cache = getInstance(context)
         val httpDataSourceFactory = DefaultHttpDataSource.Factory()
             .setAllowCrossProtocolRedirects(true)
+
+        if (cache == null) return httpDataSourceFactory
 
         return CacheDataSource.Factory()
             .setCache(cache)

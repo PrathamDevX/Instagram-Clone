@@ -117,6 +117,11 @@ class CreateMediaViewModel(
         _isRecording.value = false
     }
 
+    override fun onCleared() {
+        super.onCleared()
+        activeRecording?.stop()
+    }
+
     fun onMediaSelected(
         context: Context,
         uri: Uri,

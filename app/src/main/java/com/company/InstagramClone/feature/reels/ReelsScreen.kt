@@ -27,6 +27,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
@@ -45,8 +46,8 @@ fun ReelsScreen(
     navController: NavController,
     viewModel: ReelsViewModel = viewModel()
 ) {
-    val reelsState by viewModel.reelsState.collectAsState()
-    val comments by viewModel.activeComments.collectAsState()
+    val reelsState by viewModel.reelsState.collectAsStateWithLifecycle()
+    val comments by viewModel.activeComments.collectAsStateWithLifecycle()
     var showCommentsForReelId by remember { mutableStateOf<String?>(null) }
     
     val configuration = LocalConfiguration.current
@@ -95,7 +96,10 @@ fun ReelsScreen(
                         state = listState,
                         modifier = Modifier.fillMaxSize()
                     ) {
-                        itemsIndexed(reels) { index, reel ->
+                        itemsIndexed(
+                            items = reels,
+                            key = { _, reel -> reel.reelId }
+                        ) { index, reel ->
                             ReelItem(
                                 reel = reel,
                                 height = screenHeight,

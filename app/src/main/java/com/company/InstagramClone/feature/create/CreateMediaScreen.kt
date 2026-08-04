@@ -25,6 +25,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.company.InstagramClone.feature.create.components.*
@@ -79,8 +80,8 @@ fun CreateMediaScreen(
     val recorder = remember { Recorder.Builder().setQualitySelector(QualitySelector.from(Quality.HIGHEST)).build() }
     val videoCapture = remember { VideoCapture.withOutput(recorder) }
     
-    val isRecording by viewModel.isRecording.collectAsState()
-    val createState by viewModel.createState.collectAsState()
+    val isRecording by viewModel.isRecording.collectAsStateWithLifecycle()
+    val createState by viewModel.createState.collectAsStateWithLifecycle()
 
     LaunchedEffect(lensFacing) {
         val cameraProvider = cameraProviderFuture.get()

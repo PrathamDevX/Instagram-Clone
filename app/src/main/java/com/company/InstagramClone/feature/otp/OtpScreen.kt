@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.company.InstagramClone.feature.otp.components.CodeNotReceivedButton
@@ -29,9 +30,8 @@ import com.company.InstagramClone.navigation.Routes
 import com.company.InstagramClone.ui.theme.InstagramBlack
 import com.company.InstagramClone.ui.viewmodel.AuthState
 import com.company.InstagramClone.ui.viewmodel.AuthViewModel
-import com.google.firebase.auth.PhoneAuthProvider
-
 import com.company.InstagramClone.ui.viewmodel.VerificationType
+import com.google.firebase.auth.PhoneAuthProvider
 
 @Composable
 fun Otp(
@@ -43,9 +43,9 @@ fun Otp(
 ) {
     var otpCode by remember { mutableStateOf("") }
     val context = LocalContext.current
-    val verificationType by viewModel.currentVerificationType.collectAsState()
+    val verificationType by viewModel.currentVerificationType.collectAsStateWithLifecycle()
 
-    val authState by viewModel.authState.collectAsState()
+    val authState by viewModel.authState.collectAsStateWithLifecycle()
 
     LaunchedEffect(authState) {
         when (authState) {

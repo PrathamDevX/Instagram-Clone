@@ -21,8 +21,8 @@ import com.company.InstagramClone.feature.home.components.StoriesSection
 import com.company.InstagramClone.ui.theme.InstagramBlack
 import com.company.InstagramClone.ui.theme.InstagramBorder
 
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.company.InstagramClone.ui.components.CommentBottomSheet
 import com.company.InstagramClone.navigation.Routes
@@ -32,8 +32,8 @@ fun Home(
     navController: NavController,
     homeViewModel: HomeViewModel = viewModel()
 ) {
-    val homeState by homeViewModel.homeState.collectAsState()
-    val comments by homeViewModel.activeComments.collectAsState()
+    val homeState by homeViewModel.homeState.collectAsStateWithLifecycle()
+    val comments by homeViewModel.activeComments.collectAsStateWithLifecycle()
     var showCommentsForPostId by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
@@ -146,7 +146,10 @@ fun Home(
                         HorizontalDivider(color = InstagramBorder, thickness = 0.5.dp)
                     }
 
-                    itemsIndexed(posts) { index, post ->
+                    itemsIndexed(
+                        items = posts,
+                        key = { _, post -> post.postId }
+                    ) { index, post ->
                         val postListIndex = index + 2 
                         PostItem(
                             post = post,

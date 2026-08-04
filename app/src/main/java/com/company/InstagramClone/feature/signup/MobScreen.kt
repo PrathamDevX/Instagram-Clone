@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.company.InstagramClone.feature.signup.components.*
@@ -33,8 +34,6 @@ fun MobNoSignupScreen(
         override fun onVerificationCompleted(credential: PhoneAuthCredential) {
             Log.d("PHONE_AUTH", "Verification completed automatically")
             viewModel.signInWithCredential(credential)
-            // Note: Navigation to Password will be handled by the authState observer in OtpScreen or here
-            // But if it's auto-verified here, we should navigate from this screen
         }
 
         override fun onVerificationFailed(e: FirebaseException) {
@@ -53,7 +52,7 @@ fun MobNoSignupScreen(
         }
     }
 
-    val authState by viewModel.authState.collectAsState()
+    val authState by viewModel.authState.collectAsStateWithLifecycle()
     LaunchedEffect(authState) {
         if (authState is com.company.InstagramClone.ui.viewmodel.AuthState.Authenticated) {
             navController.navigate(Routes.Password + "?email=")

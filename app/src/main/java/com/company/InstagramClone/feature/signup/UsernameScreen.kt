@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.company.InstagramClone.feature.signup.components.*
 import com.company.InstagramClone.navigation.Routes
@@ -34,7 +35,7 @@ fun UsernameScreen(
 ) {
     var username by remember { mutableStateOf("") }
     val context = LocalContext.current
-    val authState by viewModel.authState.collectAsState()
+    val authState by viewModel.authState.collectAsStateWithLifecycle()
 
     LaunchedEffect(authState) {
         when (authState) {
