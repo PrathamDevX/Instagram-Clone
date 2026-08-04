@@ -47,12 +47,10 @@ class SocialRepository(
 
         val doc = likeRef.get().await()
         val isLiked = if (doc.exists()) {
-            // Unlike
             likeRef.delete().await()
             postRef.update("likesCount", FieldValue.increment(-1)).await()
             false
         } else {
-            // Like
             likeRef.set(mapOf("timestamp" to Timestamp.now())).await()
             postRef.update("likesCount", FieldValue.increment(1)).await()
             true
@@ -107,27 +105,29 @@ class SocialRepository(
         Result.failure(e)
     }
 
-    suspend fun getAllReels(): Result<List<ReelRecord>> = try {
-        val snapshot = firestore.collection("reels")
+    // Paging Methods
+    suspend fun getPostsPage(pageSize: Int, lastDocument: com.google.firebase.firestore.DocumentSnapshot?): com.google.firebase.firestore.QuerySnapshot {
+        var query = firestore.collection("posts")
             .orderBy("timestamp", Query.Direction.DESCENDING)
-            .get().await()
+            .limit(pageSize.toLong())
         
-        val currentUid = FirebaseAuth.getInstance().currentUser?.uid
-        val reels = snapshot.toObjects(ReelRecord::class.java)
-        
-        val finalReels = if (currentUid != null) {
-            reels.map { reel ->
-                val isLiked = firestore.collection("reels").document(reel.reelId)
-                    .collection("likes").document(currentUid).get().await().exists()
-                reel.copy(isLiked = isLiked)
-            }
-        } else {
-            reels
+        if (lastDocument != null) {
+            query = query.startAfter(lastDocument)
         }
         
-        Result.success(finalReels)
-    } catch (e: Exception) {
-        Result.failure(e)
+        return query.get().await()
+    }
+
+    suspend fun getReelsPage(pageSize: Int, lastDocument: com.google.firebase.firestore.DocumentSnapshot?): com.google.firebase.firestore.QuerySnapshot {
+        var query = firestore.collection("reels")
+            .orderBy("timestamp", Query.Direction.DESCENDING)
+            .limit(pageSize.toLong())
+        
+        if (lastDocument != null) {
+            query = query.startAfter(lastDocument)
+        }
+        
+        return query.get().await()
     }
 
     suspend fun getUserReels(userId: String): Result<List<ReelRecord>> = try {
@@ -138,17 +138,25 @@ class SocialRepository(
         val currentUid = FirebaseAuth.getInstance().currentUser?.uid
         val reels = snapshot.toObjects(ReelRecord::class.java)
         
-        val finalReels = if (currentUid != null) {
-            reels.map { reel ->
-                val isLiked = firestore.collection("reels").document(reel.reelId)
-                    .collection("likes").document(currentUid).get().await().exists()
-                reel.copy(isLiked = isLiked)
-            }
-        } else {
-            reels
+        val likedIds = if (currentUid != null) getLikedIds(currentUid, false).getOrDefault(emptySet()) else emptySet()
+        val finalReels = reels.map { reel ->
+            reel.copy(isLiked = likedIds.contains(reel.reelId))
         }
         
         Result.success(finalReels.sortedByDescending { it.timestamp })
+    } catch (e: Exception) {
+        Result.failure(e)
+    }
+
+    suspend fun getLikedIds(userId: String, isPost: Boolean): Result<Set<String>> = try {
+        // Use collectionGroup to find all "likes" subcollections where the document ID is the userId
+        // This requires an index in Firestore
+        val snapshot = firestore.collectionGroup("likes")
+            .whereEqualTo(com.google.firebase.firestore.FieldPath.documentId(), userId)
+            .get().await()
+        
+        val ids = snapshot.documents.mapNotNull { it.reference.parent.parent?.id }.toSet()
+        Result.success(ids)
     } catch (e: Exception) {
         Result.failure(e)
     }
@@ -158,11 +166,8 @@ class SocialRepository(
         val targetUserRef = firestore.collection("users").document(targetUserId)
         
         firestore.runBatch { batch ->
-            // Update counts
             batch.update(currentUserRef, "followingCount", FieldValue.increment(1))
             batch.update(targetUserRef, "followersCount", FieldValue.increment(1))
-            
-            // Add relationship records
             batch.set(currentUserRef.collection("following").document(targetUserId), mapOf("timestamp" to Timestamp.now()))
             batch.set(targetUserRef.collection("followers").document(currentUserId), mapOf("timestamp" to Timestamp.now()))
         }.await()
@@ -176,11 +181,8 @@ class SocialRepository(
         val targetUserRef = firestore.collection("users").document(targetUserId)
         
         firestore.runBatch { batch ->
-            // Update counts
             batch.update(currentUserRef, "followingCount", FieldValue.increment(-1))
             batch.update(targetUserRef, "followersCount", FieldValue.increment(-1))
-            
-            // Remove relationship records
             batch.delete(currentUserRef.collection("following").document(targetUserId))
             batch.delete(targetUserRef.collection("followers").document(currentUserId))
         }.await()

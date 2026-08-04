@@ -41,7 +41,7 @@ object CloudinaryHelper {
     fun getFeedUrl(url: String): String = getOptimizedUrl(url, width = 1080)
 
     /**
-     * Optimizes video delivery: auto format, auto quality, cap at 720p
+     * Optimizes video delivery: auto format, auto quality, auto codec, cap at 720p
      */
     fun getOptimizedVideoUrl(url: String): String {
         if (!url.contains("cloudinary.com") || url.contains("f_auto")) return url
@@ -49,8 +49,8 @@ object CloudinaryHelper {
         val uploadPart = "/upload/"
         if (!url.contains(uploadPart)) return url
 
-        // For videos, we want f_auto, q_auto and cap resolution at 720p for smoothness
-        return url.replace(uploadPart, "${uploadPart}f_auto,q_auto,w_720,c_limit/")
+        // vc_auto ensures Cloudinary picks the best codec for the device's hardware
+        return url.replace(uploadPart, "${uploadPart}f_auto,q_auto,vc_auto,w_720,c_limit/")
     }
 
     /**

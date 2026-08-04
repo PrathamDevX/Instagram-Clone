@@ -259,19 +259,40 @@ fun PostItem(
                 }
         ) {
             if (post.postImageUrl.isNotEmpty()) {
-                val inferredType = CloudinaryHelper.getMediaType(post.postImageUrl, post.mediaType)
+                val inferredType = remember(post.postImageUrl) {
+                    CloudinaryHelper.getMediaType(post.postImageUrl, post.mediaType)
+                }
                 
+                val optimizedUrl = remember(post.postImageUrl) {
+                    if (inferredType == "video") CloudinaryHelper.getOptimizedVideoUrl(post.postImageUrl)
+                    else CloudinaryHelper.getFeedUrl(post.postImageUrl)
+                }
+
                 if (inferredType == "video") {
-                    VideoPlayer(
-                        videoUrl = CloudinaryHelper.getOptimizedVideoUrl(post.postImageUrl),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .aspectRatio(0.8f),
-                        shouldPlay = shouldPlay
-                    )
+                    if (shouldPlay) {
+                        VideoPlayer(
+                            videoUrl = optimizedUrl,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .aspectRatio(0.8f),
+                            shouldPlay = true
+                        )
+                    } else {
+                        // Show Thumbnail when not active
+                        GlideImage(
+                            model = CloudinaryHelper.getThumbnailUrl(post.postImageUrl),
+                            contentDescription = "Post Thumbnail",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .aspectRatio(0.8f)
+                        ) {
+                            it.thumbnail(0.1f)
+                        }
+                    }
                 } else {
                     GlideImage(
-                        model = CloudinaryHelper.getFeedUrl(post.postImageUrl),
+                        model = optimizedUrl,
                         contentDescription = "Post Image",
                         contentScale = ContentScale.Crop,
                         modifier = Modifier

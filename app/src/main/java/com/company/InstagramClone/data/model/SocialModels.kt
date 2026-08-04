@@ -2,7 +2,9 @@ package com.company.InstagramClone.data.model
 
 import com.google.firebase.Timestamp
 import java.util.Date
+import androidx.compose.runtime.Immutable
 
+@Immutable
 data class PostRecord(
     val postId: String = "",
     val userId: String = "",
@@ -17,6 +19,7 @@ data class PostRecord(
     val timestamp: Timestamp = Timestamp.now()
 )
 
+@Immutable
 data class StoryRecord(
     val storyId: String = "",
     val userId: String = "",
@@ -29,6 +32,7 @@ data class StoryRecord(
     val views: Int = 0
 )
 
+@Immutable
 data class ReelRecord(
     val reelId: String = "",
     val userId: String = "",
@@ -45,6 +49,7 @@ data class ReelRecord(
     val timestamp: Timestamp = Timestamp.now()
 )
 
+@Immutable
 data class CommentRecord(
     val commentId: String = "",
     val userId: String = "",

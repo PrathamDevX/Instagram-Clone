@@ -40,6 +40,8 @@ import com.company.InstagramClone.ui.components.VideoPlayer
 import com.company.InstagramClone.ui.theme.InstagramSans
 import com.company.InstagramClone.utils.CloudinaryHelper
 import com.company.InstagramClone.ui.components.CommentBottomSheet
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 
 @Composable
 fun ReelsScreen(
@@ -48,7 +50,10 @@ fun ReelsScreen(
 ) {
     val reelsState by viewModel.reelsState.collectAsStateWithLifecycle()
     val comments by viewModel.activeComments.collectAsStateWithLifecycle()
+    val optimisticLikes by viewModel.optimisticLikes.collectAsStateWithLifecycle()
     var showCommentsForReelId by remember { mutableStateOf<String?>(null) }
+    
+    val reels = viewModel.reelsPagingData.collectAsLazyPagingItems()
     
     val configuration = LocalConfiguration.current
     val screenHeight = configuration.screenHeightDp.dp
@@ -74,21 +79,28 @@ fun ReelsScreen(
                     }
                 }
                 is ReelsState.Success -> {
-                    val reels = (reelsState as ReelsState.Success).reels
                     val listState = rememberLazyListState()
                     
                     val currentlyPlayingIndex by remember {
                         derivedStateOf {
-                            val layoutInfo = listState.layoutInfo
-                            val visibleItems = layoutInfo.visibleItemsInfo
-                            if (visibleItems.isEmpty()) return@derivedStateOf -1
+                            val info = listState.layoutInfo
+                            val visible = info.visibleItemsInfo
+                            if (visible.isEmpty()) return@derivedStateOf -1
 
-                            val viewPortCenter = (layoutInfo.viewportStartOffset + layoutInfo.viewportEndOffset) / 2
+                            val center = (info.viewportStartOffset + info.viewportEndOffset) / 2
                             
-                            visibleItems.minByOrNull { item ->
+                            var closestIndex = -1
+                            var minDistance = Int.MAX_VALUE
+
+                            for (item in visible) {
                                 val itemCenter = item.offset + (item.size / 2)
-                                kotlin.math.abs(itemCenter - viewPortCenter)
-                            }?.index ?: -1
+                                val distance = kotlin.math.abs(itemCenter - center)
+                                if (distance < minDistance) {
+                                    minDistance = distance
+                                    closestIndex = item.index
+                                }
+                            }
+                            closestIndex
                         }
                     }
 
@@ -96,24 +108,28 @@ fun ReelsScreen(
                         state = listState,
                         modifier = Modifier.fillMaxSize()
                     ) {
-                        itemsIndexed(
-                            items = reels,
-                            key = { _, reel -> reel.reelId }
-                        ) { index, reel ->
-                            ReelItem(
-                                reel = reel,
-                                height = screenHeight,
-                                shouldPlay = currentlyPlayingIndex == index,
-                                onLikeClick = { viewModel.toggleLike(reel.reelId) },
-                                onCommentClick = {
-                                    viewModel.fetchComments(reel.reelId)
-                                    showCommentsForReelId = reel.reelId
-                                },
-                                onFollowClick = { viewModel.toggleFollow(reel.userId) },
-                                onUserClick = { userId ->
-                                    navController.navigate(Routes.Profile.replace("{userId}", userId))
-                                }
-                            )
+                        items(
+                            count = reels.itemCount,
+                            key = reels.itemKey { it.reelId }
+                        ) { index ->
+                            val reel = reels[index]
+                            if (reel != null) {
+                                val likeState = optimisticLikes[reel.reelId]
+                                ReelItem(
+                                    reel = if (likeState != null) reel.copy(isLiked = likeState.first, likesCount = likeState.second) else reel,
+                                    height = screenHeight,
+                                    shouldPlay = currentlyPlayingIndex == index,
+                                    onLikeClick = { viewModel.toggleLike(reel.reelId, reel.likesCount, reel.isLiked) },
+                                    onCommentClick = {
+                                        viewModel.fetchComments(reel.reelId)
+                                        showCommentsForReelId = reel.reelId
+                                    },
+                                    onFollowClick = { viewModel.toggleFollow(reel.userId) },
+                                    onUserClick = { userId ->
+                                        navController.navigate(Routes.Profile.replace("{userId}", userId))
+                                    }
+                                )
+                            }
                         }
                     }
                 }
@@ -157,11 +173,22 @@ fun ReelItem(
     onUserClick: (String) -> Unit = {}
 ) {
     Box(modifier = Modifier.fillMaxWidth().height(height)) {
-        VideoPlayer(
-            videoUrl = CloudinaryHelper.getOptimizedVideoUrl(reel.videoUrl),
-            modifier = Modifier.fillMaxSize(),
-            shouldPlay = shouldPlay
-        )
+        if (shouldPlay) {
+            VideoPlayer(
+                videoUrl = CloudinaryHelper.getOptimizedVideoUrl(reel.videoUrl),
+                modifier = Modifier.fillMaxSize(),
+                shouldPlay = true
+            )
+        } else {
+            GlideImage(
+                model = CloudinaryHelper.getThumbnailUrl(reel.videoUrl),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                it.thumbnail(0.1f)
+            }
+        }
 
         // Overlay UI (Left side info)
         Column(
@@ -251,8 +278,8 @@ fun ReelItem(
             Box(
                 modifier = Modifier
                     .size(30.dp)
-                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(4.dp))
-                    .border(2.dp, Color.White, androidx.compose.foundation.shape.RoundedCornerShape(4.dp))
+                    .clip(RoundedCornerShape(4.dp))
+                    .border(2.dp, Color.White, RoundedCornerShape(4.dp))
                     .background(Color.Gray)
             ) {
                 if (reel.profileImageUrl.isNotEmpty()) {

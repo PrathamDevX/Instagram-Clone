@@ -1,5 +1,8 @@
 package com.company.InstagramClone.feature.home
 
+import androidx.compose.runtime.Immutable
+
+@Immutable
 data class Story(
     val id: Int,
     val username: String,
@@ -7,6 +10,7 @@ data class Story(
     val isLive: Boolean = false
 )
 
+@Immutable
 data class Post(
     val id: Int = 0,
     val postId: String = "",

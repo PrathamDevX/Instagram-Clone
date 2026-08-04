@@ -9,14 +9,19 @@ import com.company.InstagramClone.data.UserProfile
 import com.company.InstagramClone.data.model.CommentRecord
 import com.company.InstagramClone.data.model.ReelRecord
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
+import com.company.InstagramClone.data.paging.ReelPagingSource
 
 sealed class ReelsState {
     object Loading : ReelsState()
     data class Success(
-        val reels: List<ReelRecord>,
         val userProfile: UserProfile? = null
     ) : ReelsState()
     data class Error(val message: String) : ReelsState()
@@ -32,33 +37,26 @@ class ReelsViewModel(
     private val _activeComments = MutableStateFlow<List<CommentRecord>>(emptyList())
     val activeComments = _activeComments.asStateFlow()
 
+    private val _optimisticLikes = MutableStateFlow<Map<String, Pair<Boolean, Int>>>(emptyMap())
+    val optimisticLikes = _optimisticLikes.asStateFlow()
+
+    val reelsPagingData: Flow<PagingData<ReelRecord>> = Pager(
+        config = PagingConfig(pageSize = 5, prefetchDistance = 2),
+        pagingSourceFactory = { ReelPagingSource(socialRepository, FirebaseAuth.getInstance().currentUser?.uid) }
+    ).flow.cachedIn(viewModelScope)
+
     init {
         fetchReels()
     }
 
-    fun toggleLike(reelId: String) {
+    fun toggleLike(reelId: String, currentLikes: Int, currentlyLiked: Boolean) {
         val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
-        val currentState = _reelsState.value
+        val newIsLiked = !currentlyLiked
+        val newLikesCount = if (newIsLiked) currentLikes + 1 else currentLikes - 1
+        _optimisticLikes.value = _optimisticLikes.value + (reelId to Pair(newIsLiked, newLikesCount))
         
-        if (currentState is ReelsState.Success) {
-            // Optimistic Update
-            val updatedReels = currentState.reels.map { reel ->
-                if (reel.reelId == reelId) {
-                    val newIsLiked = !reel.isLiked
-                    reel.copy(
-                        isLiked = newIsLiked,
-                        likesCount = if (newIsLiked) reel.likesCount + 1 else reel.likesCount - 1
-                    )
-                } else {
-                    reel
-                }
-            }
-            _reelsState.value = currentState.copy(reels = updatedReels)
-            
-            // Backend Sync
-            viewModelScope.launch {
-                socialRepository.toggleLike(reelId, false, currentUserId)
-            }
+        viewModelScope.launch {
+            socialRepository.toggleLike(reelId, false, currentUserId)
         }
     }
 
@@ -81,7 +79,6 @@ class ReelsViewModel(
             )
             socialRepository.addComment(reelId, false, comment)
             fetchComments(reelId)
-            // Removed fetchReels() to prevent feed jump
         }
     }
 
@@ -90,16 +87,12 @@ class ReelsViewModel(
         if (currentUserId == targetUserId) return
         
         viewModelScope.launch {
-            val isFollowingResult = socialRepository.checkIfFollowing(currentUserId, targetUserId)
-            val isFollowing = isFollowingResult.getOrDefault(false)
-            
+            val isFollowing = socialRepository.checkIfFollowing(currentUserId, targetUserId).getOrDefault(false)
             if (isFollowing) {
                 socialRepository.unfollowUser(currentUserId, targetUserId)
             } else {
                 socialRepository.followUser(currentUserId, targetUserId)
             }
-            // No fetchReels() here to prevent full page reload
-            // In a future update, we can add isFollowing to ReelRecord for UI state
         }
     }
 
@@ -107,13 +100,7 @@ class ReelsViewModel(
         viewModelScope.launch {
             _reelsState.value = ReelsState.Loading
             val profile = repository.getUserProfile().getOrNull()
-            socialRepository.getAllReels()
-                .onSuccess { reels ->
-                    _reelsState.value = ReelsState.Success(reels, profile)
-                }
-                .onFailure {
-                    _reelsState.value = ReelsState.Error(it.message ?: "Failed to load reels")
-                }
+            _reelsState.value = ReelsState.Success(profile)
         }
     }
 }

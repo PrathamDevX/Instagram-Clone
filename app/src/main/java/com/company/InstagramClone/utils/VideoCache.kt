@@ -23,7 +23,8 @@ object VideoCache {
                     if (!cacheDir.exists()) {
                         cacheDir.mkdirs()
                     }
-                    val evictor = LeastRecentlyUsedCacheEvictor(200 * 1024 * 1024) // 200MB cache
+                    // Increased cache to 500MB for better seamless experience
+                    val evictor = LeastRecentlyUsedCacheEvictor(500 * 1024 * 1024) 
                     val databaseProvider = StandaloneDatabaseProvider(context)
                     simpleCache = SimpleCache(cacheDir, evictor, databaseProvider)
                     android.util.Log.d("VideoCache", "Cache initialized at ${cacheDir.absolutePath}")

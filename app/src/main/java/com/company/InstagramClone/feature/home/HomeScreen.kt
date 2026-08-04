@@ -26,6 +26,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.company.InstagramClone.ui.components.CommentBottomSheet
 import com.company.InstagramClone.navigation.Routes
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemContentType
+import androidx.paging.compose.itemKey
 
 @Composable
 fun Home(
@@ -34,10 +37,12 @@ fun Home(
 ) {
     val homeState by homeViewModel.homeState.collectAsStateWithLifecycle()
     val comments by homeViewModel.activeComments.collectAsStateWithLifecycle()
+    val optimisticLikes by homeViewModel.optimisticLikes.collectAsStateWithLifecycle()
     var showCommentsForPostId by remember { mutableStateOf<String?>(null) }
+    
+    val posts = homeViewModel.postsPagingData.collectAsLazyPagingItems()
 
     Scaffold(
-        // ... existing scaffold content ...
         topBar = {
             HomeTopBar(
                 onAddClick = {
@@ -102,7 +107,6 @@ fun Home(
             is HomeState.Success -> {
                 val data = homeState as HomeState.Success
                 val userProfile = data.userProfile
-                val posts = data.posts
                 val stories = data.stories
                 
                 val listState = rememberLazyListState()
@@ -113,14 +117,22 @@ fun Home(
                         val visibleItems = layoutInfo.visibleItemsInfo
                         if (visibleItems.isEmpty()) return@derivedStateOf -1
 
-                        val viewPortCenter = (layoutInfo.viewportStartOffset + layoutInfo.viewportEndOffset) / 2
+                        val center = (layoutInfo.viewportStartOffset + layoutInfo.viewportEndOffset) / 2
                         
-                        visibleItems
-                            .filter { it.index >= 2 }
-                            .minByOrNull { item ->
-                                val itemCenter = item.offset + (item.size / 2)
-                                kotlin.math.abs(itemCenter - viewPortCenter)
-                            }?.index ?: -1
+                        var closestIndex = -1
+                        var minDistance = Int.MAX_VALUE
+
+                        for (item in visibleItems) {
+                            if (item.index < 2) continue // Skip stories and divider
+                            
+                            val itemCenter = item.offset + (item.size / 2)
+                            val distance = kotlin.math.abs(itemCenter - center)
+                            if (distance < minDistance) {
+                                minDistance = distance
+                                closestIndex = item.index
+                            }
+                        }
+                        closestIndex
                     }
                 }
 
@@ -131,7 +143,7 @@ fun Home(
                         .padding(paddingValues)
                         .background(InstagramBlack)
                 ) {
-                    item {
+                    item(key = "stories", contentType = "header") {
                         StoriesSection(
                             currentUsername = userProfile?.username ?: "Your story",
                             currentUserProfilePic = userProfile?.profileImageUrl ?: "",
@@ -142,28 +154,34 @@ fun Home(
                         )
                     }
                     
-                    item {
+                    item(key = "divider", contentType = "header") {
                         HorizontalDivider(color = InstagramBorder, thickness = 0.5.dp)
                     }
 
-                    itemsIndexed(
-                        items = posts,
-                        key = { _, post -> post.postId }
-                    ) { index, post ->
-                        val postListIndex = index + 2 
-                        PostItem(
-                            post = post,
-                            shouldPlay = currentlyPlayingIndex == postListIndex,
-                            onLikeClick = { homeViewModel.toggleLike(post.postId) },
-                            onCommentClick = {
-                                homeViewModel.fetchComments(post.postId)
-                                showCommentsForPostId = post.postId
-                            },
-                            onUserClick = { userId ->
-                                navController.navigate(Routes.Profile.replace("{userId}", userId))
-                            }
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
+                    items(
+                        count = posts.itemCount,
+                        key = posts.itemKey { it.postId },
+                        contentType = posts.itemContentType { "post" }
+                    ) { index ->
+                        val post = posts[index]
+                        if (post != null) {
+                            val postListIndex = index + 2 
+                            val likeState = optimisticLikes[post.postId]
+                            
+                            PostItem(
+                                post = if (likeState != null) post.copy(isLiked = likeState.first, likesCount = likeState.second) else post,
+                                shouldPlay = currentlyPlayingIndex == postListIndex,
+                                onLikeClick = { homeViewModel.toggleLike(post.postId, post.likesCount, post.isLiked) },
+                                onCommentClick = {
+                                    homeViewModel.fetchComments(post.postId)
+                                    showCommentsForPostId = post.postId
+                                },
+                                onUserClick = { userId ->
+                                    navController.navigate(Routes.Profile.replace("{userId}", userId))
+                                }
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                        }
                     }
                 }
             }

@@ -128,16 +128,17 @@ class FirebaseAuthRepository(
                 }
             }
             
-            // Second pass to check likes if logged in
-            val finalPosts = if (currentUid != null) {
-                posts.map { post ->
-                    val isLiked = firestore.collection("posts").document(post.postId)
-                        .collection("likes").document(currentUid).get().await().exists()
-                    post.copy(isLiked = isLiked)
-                }
+            // Fetch all liked IDs in one query to avoid N+1
+            val likedIds = if (currentUid != null) {
+                val likedSnapshot = firestore.collectionGroup("likes")
+                    .whereEqualTo(com.google.firebase.firestore.FieldPath.documentId(), currentUid)
+                    .get().await()
+                likedSnapshot.documents.mapNotNull { it.reference.parent.parent?.id }.toSet()
             } else {
-                posts
+                emptySet()
             }
+            
+            val finalPosts = posts.map { it.copy(isLiked = likedIds.contains(it.postId)) }
             
             android.util.Log.d("AUTH_REPO", "Posts fetch success. Count: ${finalPosts.size}")
             Result.success(finalPosts)
