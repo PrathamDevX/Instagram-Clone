@@ -23,7 +23,7 @@ object VideoCache {
                     if (!cacheDir.exists()) {
                         cacheDir.mkdirs()
                     }
-                    // Increased cache to 500MB for better seamless experience
+                    // Optimized for small segments to allow for "instant start"
                     val evictor = LeastRecentlyUsedCacheEvictor(500 * 1024 * 1024) 
                     val databaseProvider = StandaloneDatabaseProvider(context)
                     simpleCache = SimpleCache(cacheDir, evictor, databaseProvider)

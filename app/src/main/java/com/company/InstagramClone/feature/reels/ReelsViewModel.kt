@@ -8,6 +8,7 @@ import com.company.InstagramClone.data.SocialRepository
 import com.company.InstagramClone.data.UserProfile
 import com.company.InstagramClone.data.model.CommentRecord
 import com.company.InstagramClone.data.model.ReelRecord
+import com.company.InstagramClone.utils.PlayerPoolManager
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,7 +18,10 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import androidx.paging.compose.LazyPagingItems
 import com.company.InstagramClone.data.paging.ReelPagingSource
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 
 sealed class ReelsState {
     object Loading : ReelsState()
@@ -28,9 +32,10 @@ sealed class ReelsState {
 }
 
 class ReelsViewModel(
+    application: Application,
     private val repository: AuthRepository = FirebaseAuthRepository(),
     private val socialRepository: SocialRepository = SocialRepository()
-) : ViewModel() {
+) : AndroidViewModel(application) {
     private val _reelsState = MutableStateFlow<ReelsState>(ReelsState.Loading)
     val reelsState = _reelsState.asStateFlow()
 
@@ -40,6 +45,8 @@ class ReelsViewModel(
     private val _optimisticLikes = MutableStateFlow<Map<String, Pair<Boolean, Int>>>(emptyMap())
     val optimisticLikes = _optimisticLikes.asStateFlow()
 
+    private val playerPool = PlayerPoolManager.getInstance(application)
+
     val reelsPagingData: Flow<PagingData<ReelRecord>> = Pager(
         config = PagingConfig(pageSize = 5, prefetchDistance = 2),
         pagingSourceFactory = { ReelPagingSource(socialRepository, FirebaseAuth.getInstance().currentUser?.uid) }
@@ -47,6 +54,20 @@ class ReelsViewModel(
 
     init {
         fetchReels()
+    }
+
+    fun onPageSelected(index: Int, reels: LazyPagingItems<ReelRecord>) {
+        // Pre-warm next 2 reels
+        viewModelScope.launch {
+            for (i in 1..2) {
+                val nextIndex = index + i
+                if (nextIndex < reels.itemCount) {
+                    reels[nextIndex]?.let { reel ->
+                        playerPool.prewarm(reel.reelId, reel.videoUrl)
+                    }
+                }
+            }
+        }
     }
 
     fun toggleLike(reelId: String, currentLikes: Int, currentlyLiked: Boolean) {
@@ -102,5 +123,10 @@ class ReelsViewModel(
             val profile = repository.getUserProfile().getOrNull()
             _reelsState.value = ReelsState.Success(profile)
         }
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        playerPool.releaseAll()
     }
 }

@@ -1,8 +1,10 @@
 package com.company.InstagramClone.utils
 
 import android.content.Context
+import android.net.Uri
 import androidx.annotation.OptIn
 import androidx.media3.common.C
+import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.DefaultLoadControl
@@ -10,8 +12,8 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 
 @OptIn(UnstableApi::class)
-class PlayerPoolManager(private val context: Context) {
-    private val poolSize = 3
+class PlayerPoolManager private constructor(private val context: Context) {
+    private val poolSize = 4
     private val playerPool = mutableListOf<ExoPlayer>()
     private val activePlayers = mutableMapOf<String, ExoPlayer>()
 
@@ -23,7 +25,12 @@ class PlayerPoolManager(private val context: Context) {
 
     private fun createPlayer(): ExoPlayer {
         val loadControl = DefaultLoadControl.Builder()
-            .setBufferDurationsMs(15000, 50000, 1000, 2000)
+            .setBufferDurationsMs(
+                15000, // minBufferMs
+                50000, // maxBufferMs
+                1000,  // bufferForPlaybackMs
+                2000   // bufferForPlaybackAfterRebufferMs
+            )
             .setPrioritizeTimeOverSizeThresholds(true)
             .build()
 
@@ -45,10 +52,11 @@ class PlayerPoolManager(private val context: Context) {
             return player
         }
         
-        // If pool is empty, steal the oldest active player (LRU style could be better, but keeping it simple)
-        val firstKey = activePlayers.keys.firstOrNull()
-        if (firstKey != null) {
-            val player = activePlayers.remove(firstKey)
+        // LRU-like stealing: if pool is empty, take the first one that is NOT the currently playing id
+        // This is a simple implementation; ideally we'd track last access time.
+        val targetKey = activePlayers.keys.firstOrNull { it != id }
+        if (targetKey != null) {
+            val player = activePlayers.remove(targetKey)
             if (player != null) {
                 player.stop()
                 player.clearMediaItems()
@@ -58,6 +66,17 @@ class PlayerPoolManager(private val context: Context) {
         }
         
         return null
+    }
+
+    fun prewarm(id: String, url: String) {
+        if (activePlayers.containsKey(id)) return
+        
+        val player = acquirePlayer(id)
+        if (player != null) {
+            player.setMediaItem(MediaItem.fromUri(Uri.parse(url)))
+            player.prepare()
+            player.playWhenReady = false // Prepare but don't play
+        }
     }
 
     fun releasePlayer(id: String) {
